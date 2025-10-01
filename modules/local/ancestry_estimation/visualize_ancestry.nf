@@ -1,7 +1,5 @@
-import groovy.json.JsonOutput
-
 process VISUALIZE_ANCESTRY {
-    
+
     label 'ancestry'
     publishDir params.output, mode: 'copy'
 

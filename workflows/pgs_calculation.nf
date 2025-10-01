@@ -6,13 +6,12 @@ include { FILTER_BY_CATEGORY } from '../modules/local/pgs_calculation/filter_by_
 
 
 workflow PGS_CALCULATION {
-    
-    take: 
+
+    take:
     imputed_chunks
     estimated_ancestry
-    
 
-    main:    
+    main:
     scores_txt = file(params.pgscatalog.scores, checkIfExists:true)
     scores_info = file(params.pgscatalog.scores + ".info", checkIfExists:true)
     scores_index = file(params.pgscatalog.scores + ".tbi", checkIfExists:true)
@@ -32,7 +31,7 @@ workflow PGS_CALCULATION {
     MERGE_CHUNKS_SCORES(
         CALCULATE_CHUNKS.out.scores_chunks.collect()
     )
-  
+
     MERGE_CHUNKS_INFOS(
         CALCULATE_CHUNKS.out.info_chunks.collect()
     )

@@ -1,9 +1,7 @@
-import groovy.json.JsonOutput
-
 process PREPARE_TRACE {
 
     label 'ancestry'
-    
+
     input:
     path(vcf_files)
     path(reference_sites)

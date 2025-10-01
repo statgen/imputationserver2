@@ -1,7 +1,5 @@
-import groovy.json.JsonOutput
-
 process ESTIMATE_ANCESTRY {
-    
+
     label 'ancestry'
     publishDir params.output, mode: 'copy'
 
@@ -11,7 +9,7 @@ process ESTIMATE_ANCESTRY {
     path(reference_samples)
 
     output:
-    path ("estimated-population.txt"), emit:  populations
+    path ("estimated-population.txt"), emit: populations
 
     script:
     def avail_mem = 1024

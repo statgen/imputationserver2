@@ -33,7 +33,7 @@ if (phasing_engine != 'eagle' && phasing_engine != 'beagle' && phasing_engine !=
 
 // create random password when not set by user
 if (params.password == null) {
-    params.encryption_password = PasswordCreator.createPassword()   
+    params.encryption_password = PasswordCreator.createPassword()
 } else {
     params.encryption_password = params.password
 }
@@ -56,19 +56,19 @@ params.refpanel.sites = "./${file(params.refpanel.sites).fileName}"
 
 site_files_ch = Channel.of(1..22, 'X', 'MT')
     .map {
-        it -> 
+        it ->
             def sites_file = file(PatternUtil.parse(params.refpanel.sites_pattern, [chr: it]))
             def sites_file_index = file(PatternUtil.parse(params.refpanel.sites_pattern+ ".tbi", [chr: it]))
-            
+
             if(!sites_file.exists()){
-                return null;
-            }  
+                return null
+            }
 
             if(sites_file.exists() && !sites_file_index.exists()){
                 error "Missing tabix index for " + sites_file
-            }  
-        
-            return tuple(sites_file, sites_file_index); 
+            }
+
+            return tuple(sites_file, sites_file_index)
     }
 
 include { INPUT_VALIDATION } from './workflows/input_validation'
@@ -92,17 +92,17 @@ workflow {
             INPUT_VALIDATION.out.validation_report,
             site_files_ch.collect()
         )
-       
+
        // check if QC chunks exist in case QC failed
        QUALITY_CONTROL.out.qc_metafiles.ifEmpty {
        error "QC step failed"
-       } 
+       }
 
         if (params.mode == 'imputation') {
 
             phased_ch =  QUALITY_CONTROL.out.qc_metafiles
 
-            if (phasing_engine != 'no_phasing') { 
+            if (phasing_engine != 'no_phasing') {
 
                 PHASING(
                     QUALITY_CONTROL.out.qc_metafiles
@@ -111,20 +111,20 @@ workflow {
                 phased_ch = PHASING.out.phased_ch
 
             }
-                 
+
             IMPUTATION(
                 phased_ch
             )
-            
+
             if (params.merge_results === true) {
                 ENCRYPTION(
                     IMPUTATION.out.groupTuple()
                 )
             }
-            
+
         }
     }
-    
+
     // handles empty objects (e.g. cloudgene)
     ancestry_enabled = params.ancestry != null && params.ancestry != "" && params.ancestry.enabled
 
@@ -138,35 +138,35 @@ workflow {
             IMPUTATION.out,
             ancestry_enabled ? ANCESTRY_ESTIMATION.out : Channel.empty()
         )
-        
+
     }
-    
+
 }
 
 workflow.onComplete {
     //TODO: use templates
     //TODO: move in EmailHelper class
         if (!workflow.success) {
-            def statusMessage = (workflow.exitStatus != null || workflow.errorReport == "QC step failed") 
-            ? "failed" 
+            def statusMessage = (workflow.exitStatus != null || workflow.errorReport == "QC step failed")
+            ? "failed"
             : "canceled"
 
-            def statusText = (statusMessage == "failed") 
-            ? "Your job failed." 
+            def statusText = (statusMessage == "failed")
+            ? "Your job failed."
             : "Your job has been canceled."
-                
+
             if (params.send_mail && params.user.email != null) {
                 sendMail{
                     to "${params.user.email}"
-                    subject "[${params.service.name}] Job ${params.project} ${statusMessage}" 
+                    subject "[${params.service.name}] Job ${params.project} ${statusMessage}"
                     body "Dear ${params.user.name}, \n ${statusText}.\n\n More details can be found at the following link: ${params.service.url}/index.html#!jobs/${params.project_id}"
                 }
             }
-        println "::error:: Imputation job ${statusMessage}." 
+        println "::error:: Imputation job ${statusMessage}."
         return
     }
 
-    //submit counters for successful imputation jobs  
+    //submit counters for successful imputation jobs
     if (params.mode == 'imputation') {
         println "::submit-counter name=samples::"
         println "::submit-counter name=genotypes::"
@@ -205,5 +205,5 @@ workflow.onComplete {
     } else {
         println "::message:: Data have been exported successfully."
     }
- 
+
 }

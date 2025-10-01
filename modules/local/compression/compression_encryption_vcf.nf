@@ -1,19 +1,17 @@
-import groovy.json.JsonOutput
-
 process COMPRESSION_ENCRYPTION_VCF {
-    
+
     label 'postprocessing'
     publishDir params.output, mode: 'copy'
     tag "Merge Chromosome ${chr}"
 
     input:
     tuple val(chr), val(start), val(end), path(imputed_vcf_data), path(imputed_info), path(imputed_meta_vcf_data)
-    
+
     output:
     path("*.zip"), emit: encrypted_file, optional: true
     path("*.md5"), emit: md5_file, optional: true
     path("chr${chr}*"), emit: raw_files, optional: true
-    
+
     script:
     imputed_joined = processFileList(imputed_vcf_data)
     meta_joined = processFileList(imputed_meta_vcf_data)
@@ -29,8 +27,8 @@ process COMPRESSION_ENCRYPTION_VCF {
     """
     # concat info files
     bcftools concat --threads ${task.cpus} -n ${info_joined} -o ${info_name} -Oz
-    
-    # concat dosage files and update header 
+
+    # concat dosage files and update header
     bcftools concat --threads ${task.cpus} -n ${imputed_joined} -o intermediate_${imputed_name} -Oz
     echo "##mis_pipeline=${workflow.manifest.version}" > add_header.txt
     echo "##mis_phasing=${params.phasing.engine}" >> add_header.txt
@@ -49,15 +47,15 @@ process COMPRESSION_ENCRYPTION_VCF {
     if [[ "${params.imputation.create_index}" = true ]]
     then
         tabix ${imputed_name}
-    fi    
-  
+    fi
+
     # zip files
     if [[ "${params.encryption.enabled}" = true ]]
-    then    
+    then
         7z a -tzip ${aes} -mmt${task.cpus} -p"${params.encryption_password}" ${zip_name} ${prefix}*
         rm *vcf.gz* *info.gz add_header.txt
     fi
-    
+
     # create md5 of zip file
     if [[ "${params.encryption.enabled}" = true && "${params.imputation.md5}" = true ]]
     then

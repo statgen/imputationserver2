@@ -1,5 +1,5 @@
 process MERGE_CHUNKS_INFOS {
-    
+
   label 'pgs'
   publishDir params.output, mode: 'copy'
 

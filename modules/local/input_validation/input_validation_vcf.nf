@@ -1,13 +1,11 @@
-import groovy.json.JsonOutput
-
 process INPUT_VALIDATION_VCF {
-    
+
     label 'preprocessing'
     publishDir params.output, mode: 'copy', pattern: '*.{html,log}'
 
     input:
     path(vcf_files)
-  
+
     output:
     path("*.vcf.gz"), includeInputs: true, emit: validated_files
     path("validation_report.txt"), emit: validation_report
@@ -22,10 +20,10 @@ process INPUT_VALIDATION_VCF {
 
     """
     set +e
-    echo '${JsonOutput.toJson(params.refpanel)}' > reference-panel.json
+    echo '${groovy.json.JsonOutput.toJson(params.refpanel)}' > reference-panel.json
 
     # Verify if VCF files are valid
-    for vcf in $vcf_files; do
+    for vcf in ${vcf_files}; do
         # Attempt to create the index using tabix
         if ! output=\$(tabix -p vcf "\$vcf" 2>&1); then
             echo ::group type=error
@@ -49,7 +47,7 @@ process INPUT_VALIDATION_VCF {
         --no-index \
         --contactName "${(params.service.contact == "" || params.service.contact == null) ? "Admin" : params.service.contact}" \
         --contactEmail "${(params.service.email == "" || params.service.email == null) ? "admin@localhost" : params.service.email}" \
-        $vcf_files 
+        ${vcf_files}
     exit_code_a=\$?
 
     cat validation_report.txt

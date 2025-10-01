@@ -2,40 +2,38 @@ import org.yaml.snakeyaml.Yaml
 
 class RefPanelUtil {
 
-    public static Object loadFromFile(filename) {
-
+    public static Map<String, Object> loadFromFile(filename) {
         println "Loading reference panel from file ${filename}..."
         def params_file = new File(filename)
         def parameter_yaml = new FileInputStream(params_file)
         def panel = new Yaml().load(parameter_yaml)
 
-        HashMap<String, String> environment = new HashMap<String, String>();
-		def folder = params_file.getParentFile().getAbsolutePath()
-        environment.put("CLOUDGENE_APP_LOCATION", folder);
+        HashMap<String, String> environment = [:]
+        def folder = params_file.getParentFile().getAbsolutePath()
+        environment.put('CLOUDGENE_APP_LOCATION', folder)
 
         RefPanelUtil.resolveEnv(panel.properties, environment)
         return panel.properties
-
     }
 
     public static void resolveEnv(properties, environment) {
         for (String property : properties.keySet()) {
-            Object propertyValue = properties.get(property);
+            Object propertyValue = properties.get(property)
             if (propertyValue instanceof String) {
-                propertyValue = RefPanelUtil.env(propertyValue.toString(), environment);
+                propertyValue = RefPanelUtil.env(propertyValue.toString(), environment)
             } else if (propertyValue instanceof Map) {
-                resolveEnv(propertyValue, environment);
+                resolveEnv(propertyValue, environment)
             }
-            properties.put(property, propertyValue);
+            properties.put(property, propertyValue)
         }
     }
 
     public static String env(String value, Map<String, String> variables) {
-        def updatedValue = value +"";
+        String updatedValue = value + ''
         for (String key : variables.keySet()) {
-            updatedValue = updatedValue.replaceAll('\\$\\{' + key + '\\}', variables.get(key));
+            updatedValue = updatedValue.replaceAll('\\$\\{' + key + '\\}', variables.get(key))
         }
-        return updatedValue;
+        return updatedValue
     }
 
 }

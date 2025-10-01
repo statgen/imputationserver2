@@ -1,9 +1,7 @@
-import groovy.json.JsonOutput
-
 process EXECUTE_TRACE {
 
     label 'ancestry'
-    
+
     input:
     path(samples)
     path(vcf_file)
@@ -14,7 +12,7 @@ process EXECUTE_TRACE {
     path(reference_samples)
 
     output:
-    path ("${batch_name}.ProPC.coord"), emit:  pcs
+    path ("${batch_name}.ProPC.coord"), emit: pcs
 
     script:
     batch_name = "batch_${samples.baseName}"

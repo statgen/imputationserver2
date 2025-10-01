@@ -3,10 +3,10 @@ include { BEAGLE } from '../modules/local/phasing/beagle'
 
 workflow PHASING {
 
-    take: 
-    metafiles_ch 
-    main:
+    take:
+    metafiles_ch
 
+    main:
     chromosomes = Channel.of(1..22, 'X.nonPAR', 'X.PAR1', 'X.PAR2', 'MT')
 
     if (params.phasing.engine == 'eagle' && params.refpanel.refEagle != null) {
@@ -15,11 +15,11 @@ workflow PHASING {
 
         phasing_reference_ch = chromosomes
             .map {
-                it -> 
+                it ->
                     def eagle_file = file(PatternUtil.parse(params.refpanel.refEagle, [chr: it]))
                     def eagle_file_index = file(PatternUtil.parse(params.refpanel.refEagle + ".csi", [chr: it]))
                     if(!eagle_file.exists() || !eagle_file_index.exists()){
-                        return null;
+                        return null
                     }
                     return tuple(it.toString(),eagle_file,eagle_file_index)
             }
@@ -36,10 +36,10 @@ workflow PHASING {
 
         phasing_reference_ch = chromosomes
             .map {
-                it -> 
+                it ->
                     def beagle_file = file(PatternUtil.parse(params.refpanel.refBeagle, [chr: it]))
                     if(!beagle_file.exists()){
-                        return null;
+                        return null
                     }
                     return tuple(it.toString(),beagle_file)
             }
@@ -49,7 +49,7 @@ workflow PHASING {
                 it ->
                     def beagle_map_file = file(PatternUtil.parse(params.refpanel.mapBeagle, [chr: it]))
                     if(!beagle_map_file.exists()){
-                        return null;
+                        return null
                     }
                     return tuple(it.toString(),beagle_map_file)
             }
@@ -65,7 +65,7 @@ workflow PHASING {
 
     }
 
-    emit: 
+    emit:
     phased_ch
 
 }

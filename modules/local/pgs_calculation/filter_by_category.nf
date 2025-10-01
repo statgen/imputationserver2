@@ -1,7 +1,7 @@
 process FILTER_BY_CATEGORY {
 
     label 'pgs'
-    
+
     input:
     path(meta)
     val(category)
@@ -15,7 +15,7 @@ process FILTER_BY_CATEGORY {
         filter \
         --meta ${meta} \
         --category '${category}' \
-        --out scores.txt 
+        --out scores.txt
 
     # Count the number of lines in scores.txt
     line_count=\$(wc -l < scores.txt)

@@ -1,5 +1,5 @@
 process CREATE_HTML_REPORT {
-    
+
     label 'pgs'
     publishDir params.output, mode: 'copy'
 

@@ -1,5 +1,5 @@
 process CALCULATE_CHUNKS {
-    
+
     label 'pgs'
     tag "${vcf_file}"
 

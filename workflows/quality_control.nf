@@ -7,7 +7,7 @@ workflow QUALITY_CONTROL {
     validated_files
     validation_report
     site_files_ch
-    
+
     main:
 
     def chain_file = []
@@ -15,7 +15,7 @@ workflow QUALITY_CONTROL {
     if(!panel_version.equals(params.build)) {
         def name = params.build + "To" + panel_version + ".over.chain.gz"
         chain_file = file("$projectDir/files/chains/" + name, checkIfExists: true)
-    } 
+    }
 
     QUALITY_CONTROL_VCF(
         validated_files,
@@ -32,7 +32,7 @@ workflow QUALITY_CONTROL {
     QUALITY_CONTROL_VCF.out.chunks_csv
         .flatten()
         .splitCsv(header:false, sep:'\t')
-        .map{ 
+        .map{
             row-> tuple(file(row[4]).baseName, row[0], row[1], row[2], row[3], row[4], row[5], row[6])
         }
         .set { chunks_csv_index }
