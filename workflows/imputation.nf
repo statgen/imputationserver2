@@ -39,26 +39,6 @@ workflow IMPUTATION {
         params.imputation.min_recom
     )
 
-    imputed_chunks_modified = MINIMAC4.out.imputed_chunks.
-        map {
-            tuple ->
-                if (tuple[0].startsWith('X.')){
-                    tuple[0] = 'X'
-                    tuple[3] = updateChrX(tuple[3])
-                    tuple[4] = updateChrX(tuple[4])
-                    tuple[5] = updateChrX(tuple[5])
-                }
-                return tuple
-            }
-
     emit:
-    imputed_chunks = imputed_chunks_modified
-}
-
-public static String updateChrX(Object value) {
-    //update value
-    String updadedValue = value.toString().replaceAll('PAR1','1').replaceAll('nonPAR','2').replaceAll('PAR2','3')
-    //rename file
-    file(value).moveTo(updadedValue)
-    return updadedValue
+    imputed_chunks = MINIMAC4.out.imputed_chunks
 }
