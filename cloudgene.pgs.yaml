@@ -1,7 +1,7 @@
 id: imputationserver2-pgs
 name: Polygenic Score Calculation
 description: "You can upload genotyped data and the application imputes your genotypes, performs ancestry estimation and finally calculates Polygenic Risk Scores.<br><br>No dataset at hand? No problem, download our example dataset: <a href=\"https://imputationserver.sph.umich.edu/resources/50-samples.zip\" class=\"btn btn-sm btn-secondary\" style=\"color:#ffffff !important\"><i class=\"fa fa-file\"></i> 50-samples.zip</a><br><br>"
-version: 2.0.9
+version: 2.0.10-statgen.2
 website: https://imputationserver.readthedocs.io
 category: Application
 submitButton: Start Calculation
@@ -14,7 +14,7 @@ workflow:
       # params without UI
       params:
         project: "${CLOUDGENE_JOB_NAME}"
-        project_id: "${CLOUDGENE_JOB_ID}"        
+        project_id: "${CLOUDGENE_JOB_ID}"
         files: "${files}/*.vcf.gz"
         mode: "imputation"
         allele_frequency_population: "off"
@@ -24,7 +24,7 @@ workflow:
           aes: false
         imputation:
           meta: false
-          min_r2: ${r2Filter}          
+          min_r2: ${r2Filter}
         pgs:
           enabled: true
           category: "${pgs_category}"
@@ -41,13 +41,13 @@ workflow:
         - id: validation
           label: "Input Validation"
         - id: qc
-          label: "Quality Control"          
+          label: "Quality Control"
         - id: imputation
           label: "Phasing and Imputation"
         - id: ancestry
-          label: "Ancestry Estimation"  
+          label: "Ancestry Estimation"
         - id: pgs
-          label: "Polygenic Scores"                           
+          label: "Polygenic Scores"
       processes:
         - process: "INPUT_VALIDATION:INPUT_VALIDATION_VCF"
           view: status
@@ -73,7 +73,7 @@ workflow:
           view: progressbar
           label: "Imputation"
           group: "imputation"
-        - process: "PGS_CALCULATION:FILTER_BY_CATEGORY"        
+        - process: "PGS_CALCULATION:FILTER_BY_CATEGORY"
           view: status
           label: "Prepare Polygenic Scores"
           group: "pgs"
@@ -100,7 +100,7 @@ workflow:
         - process: "ANCESTRY_ESTIMATION:PREPARE_TRACE"
           view: progressbar
           label: "Prepare Data"
-          group: "ancestry"          
+          group: "ancestry"
         - process: "ANCESTRY_ESTIMATION:EXECUTE_TRACE"
           view: progressbar
           label: "Prepare Data"
@@ -112,7 +112,7 @@ workflow:
         - process: "ANCESTRY_ESTIMATION:VISUALIZE_ANCESTRY"
           view: label
           label: "Visualize Ancestry"
-          group: "ancestry"                     
+          group: "ancestry"
   inputs:
     - id: refpanel
       description: Reference Panel (<a href="https://imputationserver.sph.umich.edu/start.html#!pages/refpanels" target="_blank">Details</a>)
@@ -142,7 +142,7 @@ workflow:
         0.3: 0.3
         0.8: 0.8
       serialize: false
-      
+
     - id: myseparator0
       type: group
 
@@ -180,7 +180,7 @@ workflow:
       value:
       visible: false
       type: text
-      
+
     - id: check1
       description: I will not attempt to re-identify or contact research participants.
       type: terms_checkbox
