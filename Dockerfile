@@ -54,12 +54,12 @@ RUN wget https://github.com/lukfor/pgs-calc/releases/download/v${PGS_CALC_VERSIO
 ENV PATH="/opt/pgs-calc:${PATH}"
 
 # Install imputationserver-utils
-ENV IMPUTATIONSERVER_UTILS_VERSION=1.5.4-statgen.2
+ENV IMPUTATIONSERVER_UTILS_VERSION=1.5.4-statgen.3
 RUN mkdir /opt/imputationserver-utils
 WORKDIR "/opt/imputationserver-utils"
-RUN wget https://github.com/statgen/imputationserver-utils/releases/download/v${IMPUTATIONSERVER_UTILS_VERSION}/imputationserver-utils.tar.gz && \
-    tar xvfz imputationserver-utils.tar.gz && \
-    rm imputationserver-utils.tar.gz
+RUN wget https://github.com/statgen/imputationserver-utils/releases/download/v${IMPUTATIONSERVER_UTILS_VERSION}/imputationserver-utils-${IMPUTATIONSERVER_UTILS_VERSION}.tar.gz && \
+    tar xvfz imputationserver-utils-${IMPUTATIONSERVER_UTILS_VERSION}.tar.gz && \
+    rm imputationserver-utils-${IMPUTATIONSERVER_UTILS_VERSION}.tar.gz
 
 # Install vcf2geno and trace
 ENV LASER_VERSION=2.04
