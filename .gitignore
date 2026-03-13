@@ -9,4 +9,5 @@ cloudgene.report.json
 .nf-test.log
 *.jar
 .idea
+*.iml
 scratch
