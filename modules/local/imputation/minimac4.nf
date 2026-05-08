@@ -17,7 +17,13 @@ process MINIMAC4 {
     val minRecombination
 
     output:
-    tuple val(chr_cleaned), val(start), val(end), file("*.dose.vcf.gz"), file("*.info.gz"), file("*.empiricalDose.vcf.gz"), emit: imputed_chunks
+    tuple val(chr_cleaned),
+    val(start),
+    val(end),
+    path("*.dose.${params.imputation.output_format ?: 'vcf.gz'}"),
+    path("*.info.gz"),
+    path("*.empiricalDose.${params.imputation.output_format ?: 'vcf.gz'}"),
+    emit: imputed_chunks
 
     script:
     output_format = params.imputation.output_format ?: 'vcf.gz'
