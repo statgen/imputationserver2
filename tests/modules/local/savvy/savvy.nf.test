@@ -1,0 +1,53 @@
+nextflow_process {
+
+    name "Test Process Minimac4"
+    script "modules/local/imputation/minimac4.nf"
+    process "MINIMAC4"
+
+    test("Should run without failures and output dav") {
+
+        when {
+            params {
+                refpanel = [
+                    build: "hg19"
+                ]
+            }
+            process {
+                """
+                input[0] = tuple "20", 1, 100000, "status", file("${projectDir}/tests/data/input/chr20-phased/chr20.R50.merged.1.330k.recode.small.vcf.gz"), file("${projectDir}/tests/data/refpanels/hapmap2/msavs/hapmap_r22.chr20.CEU.hg19.msav")
+                input[1] = []
+                input[2] = params.refpanel.build
+                input[3] = params.imputation.window
+                input[4] = params.imputation.minimac_min_ratio
+                input[5] = params.imputation.min_r2
+                input[6] = params.imputation.decay
+                input[7] = params.imputation.prob_threshold
+                input[8] = params.imputation.prob_threshold_s1
+                input[9] = params.imputation.diff_threshold
+                input[10] = params.imputation.min_recom
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def firstFile = path(process.out.imputed_chunks.get(0).get(3))
+             assert firstFile.exists()
+             assert firstFile.size() > 0
+             assert firstFile.toString().endsWith(".sav")
+
+             def parentDir = firstFile.parent.toString()
+             def fileName = firstFile.getFileName().toString()
+
+             def cmd = "docker run --rm --platform linux/amd64 -v \"${parentDir}:/work\" statgen/imputationserver2:latest bash -lc 'sav head -O vcf /work/${fileName}'"
+
+             def proc = ["bash", "-lc", cmd].execute()
+             proc.waitFor()
+
+             assert proc.exitValue() == 0 : proc.err.text
+            assert proc.text.contains("##FORMAT=<ID=HDS")
+        }
+
+    }
+
+ }

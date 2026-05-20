@@ -19,6 +19,18 @@ RUN conda tos accept && \
     conda update --all && \
     conda clean --all
 
+#install Savvy
+ENV SAVVY_VERSION=2.2.0
+WORKDIR "/opt"
+RUN wget https://github.com/statgen/savvy/releases/download/v${SAVVY_VERSION}/savvy-${SAVVY_VERSION}-Linux-x86_64-cli.sh && \
+    chmod u+x /opt/savvy-${SAVVY_VERSION}-Linux-x86_64-cli.sh && \
+    /opt/savvy-${SAVVY_VERSION}-Linux-x86_64-cli.sh --skip-license --prefix=/opt && \
+    mv /opt/bin/sav /usr/bin/ && \
+    rm -r /opt/bin && \
+    rm /opt/savvy-${SAVVY_VERSION}-Linux-x86_64-cli.sh && \
+    which sav && \
+    sav --help
+
 # Install eagle
 ENV EAGLE_VERSION=2.4.1
 WORKDIR "/opt"
