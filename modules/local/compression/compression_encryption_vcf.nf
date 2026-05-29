@@ -37,7 +37,7 @@ process COMPRESSION_ENCRYPTION_VCF {
     if [[ "${output_format}" == "sav" ]]
     then
         # SAV format info file
-        sav concat  ${info_joined} -o ${info_name} -Oz
+        sav concat  ${info_joined} -o ${info_name}
 
         if [[ "${params.encryption.annotate}" = true ]]
         then
