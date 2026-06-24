@@ -52,7 +52,7 @@ process MINIMAC4 {
         --overlap ${minimac_window} \
         --output ${dose_output} \
         --output-format ${output_format} \
-        --format GT,DS,GP,HDS \
+        --format HDS \
         --min-ratio ${minimac_min_ratio} \
         --all-typed-sites \
         --sites ${chunkfile_name}.info.gz \
