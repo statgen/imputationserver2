@@ -22,6 +22,7 @@ for (param in requiredParams) {
 
 //TODO create json validation file
 def phasing_engine = params.phasing.engine
+def run_mode = params.mode
 
 if (phasing_engine != 'eagle' && phasing_engine != 'no_phasing') {
     println "::error:: For phasing, only options 'eagle' or 'no_phasing' are allowed."
@@ -92,19 +93,40 @@ workflow {
             error "QC step failed"
         }
 
-        if (params.mode == 'imputation') {
+        if (params.mode == 'imputation'|| run_mode == 'phasing_only') {
             phased_ch =  QUALITY_CONTROL.out.qc_metafiles
 
             if (phasing_engine != 'no_phasing') {
                 PHASING(QUALITY_CONTROL.out.qc_metafiles)
                 phased_ch = PHASING.out.phased_ch
+                  phased_ch.view { chr, start, end, status, vcf ->
+                    """
+                    PHASED TUPLE
+                      chr:    ${chr}
+                      start:  ${start}
+                      end:    ${end}
+                      status: ${status}
+                      vcf:    ${vcf}
+                    """.stripIndent()
+                }
             }
+            if (run_mode == 'phasing_only') {
+                phased_chunks_ch = phased_ch
+                    .map { chr, start, end, phasing_status, phased_vcf ->
+                        def chr_cleaned = chr.toString().startsWith('X.') ? 'X' : chr
+                        tuple(chr_cleaned, start, end, phasing_status, phased_vcf)
+                    }
 
-            IMPUTATION(phased_ch)
+                if (params.merge_results == true) {
+                    ENCRYPTION(phased_chunks_ch.groupTuple())
+                }
+            } else {
+                    IMPUTATION(phased_ch)
 
-            if (params.merge_results == true) {
-                ENCRYPTION(IMPUTATION.out.groupTuple())
-            }
+                    if (params.merge_results == true) {
+                        ENCRYPTION(IMPUTATION.out.groupTuple())
+                    }
+                   }
         }
     }
 

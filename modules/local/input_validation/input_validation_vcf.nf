@@ -10,6 +10,7 @@ process INPUT_VALIDATION_VCF {
     path "validation_report.txt", emit: validation_report
 
     script:
+    def validation_mode = params.mode == 'phasing_only' ? 'imputation' : params.mode
     def avail_mem = 1024
     if (!task.memory) {
         log.info('[INPUT_VALIDATION_VCF] Available memory not known - defaulting to 1GB. Specify process memory requirements to change this.')
@@ -40,7 +41,7 @@ process INPUT_VALIDATION_VCF {
         --build ${params.build} \
         --r2Filter ${params.imputation.min_r2} \
         --phasing ${params.phasing.engine} \
-        --mode ${params.mode} \
+        --mode ${validation_mode} \
         --chunksize ${params.chunksize} \
         --minSamples ${params.min_samples} \
         --maxSamples ${params.max_samples} \
