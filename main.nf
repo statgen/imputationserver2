@@ -151,7 +151,8 @@ workflow.onComplete {
     if (params.mode == 'imputation') {
         println "::submit-counter name=samples::"
         println "::submit-counter name=variants::"
-        println "::submit-counter name=chunks::"
+        println "::submit-counter name=input-chunks::"
+        println "::submit-counter name=remaining-chunks::"
         println "::submit-counter name=runs::"
         println "::submit-counter name=chromosomes::"
         println "::submit-counter name=chromosomes-per-sample::"
