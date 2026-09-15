@@ -16,14 +16,12 @@ COPY environment.yml .
 RUN conda tos accept && \
     conda update -y conda && \
     conda env update -n root -f environment.yml && \
-    conda update --all && \
     conda clean --all
 
 # Install eagle
 ENV EAGLE_VERSION=2.4.1
 WORKDIR "/opt"
-# RUN wget https://storage.googleapis.com/broad-alkesgroup-public/Eagle/downloads/old/Eagle_v${EAGLE_VERSION}.tar.gz && \
-RUN wget https://storage.googleapis.com/broad-alkesgroup-public/Eagle/downloads/Eagle_v2.4.1.tar.gz && \
+RUN wget https://storage.googleapis.com/broad-alkesgroup-public/Eagle/downloads/Eagle_v${EAGLE_VERSION}.tar.gz && \
     tar xvfz Eagle_v${EAGLE_VERSION}.tar.gz && \
     rm Eagle_v${EAGLE_VERSION}.tar.gz && \
     mv Eagle_v${EAGLE_VERSION}/eagle /usr/bin/.
@@ -85,6 +83,3 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
 
 # Needed, because imputationserver-utils starts process (e.g. tabix)
 ENV JAVA_TOOL_OPTIONS="-Djdk.lang.Process.launchMechanism=vfork"
-
-# Needed, because bioconda does not correctly installs dependencies for bcftools
-RUN ln -s /lib/x86_64-linux-gnu/libgsl.so.27 /opt/conda/lib/libgsl.so.25
