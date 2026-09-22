@@ -21,4 +21,5 @@ dependencies:
   - csvtk=0.25.0
   - unzip=6.0
   - p7zip=15.09
-  - bcftools=1.20
+  - bcftools=1.20 # Keep in sync with htslib!
+  - htslib=1.20 # Keep in sync with bcftools!
