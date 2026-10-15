@@ -3,7 +3,9 @@ include { COMPRESSION_ENCRYPTION_VCF } from '../modules/local/compression/compre
 workflow ENCRYPTION {
     take:
     imputed_chunks
+    encryption_password
+    refpanel
 
     main:
-    COMPRESSION_ENCRYPTION_VCF(imputed_chunks)
+    COMPRESSION_ENCRYPTION_VCF(imputed_chunks, encryption_password, refpanel)
 }

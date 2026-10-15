@@ -7,6 +7,7 @@ process QUALITY_CONTROL_REPORT {
     path validation_report
     path qc_report
     path qc_report_file
+    val population // String
 
     output:
     path "*.html"
@@ -19,7 +20,7 @@ process QUALITY_CONTROL_REPORT {
             validation_report = '${validation_report}',
             qc_report = '${qc_report}',
             name = '${params.project}',
-            allele_frequency_population = '${params.population}',
+            allele_frequency_population = '${population}',
             version = '${workflow.manifest.version}',
             date = '${params.project_date}',
             service = '${params.service.name}'

@@ -1,21 +1,26 @@
+nextflow.enable.types =  true
+
+include { AncestryParams } from '../../../types/params'
+
 process ESTIMATE_ANCESTRY {
     label 'ancestry'
     publishDir params.output, mode: 'copy'
 
     input:
-    path study_pcs
-    path reference_pc_coord
-    path reference_samples
+    study_pcs: Path
+    reference_pc_coord: Path
+    reference_samples: Path
+    ancestry: AncestryParams
 
     output:
-    path ("estimated-population.txt"), emit: populations
+    populations: Path = file("estimated-population.txt")
 
     script:
-    def avail_mem = 1024
+    def avail_mem: Integer = 1024
     if (!task.memory) {
         log.info('[ESTIMATE_ANCESTRY] Available memory not known - defaulting to 1GB. Specify process memory requirements to change this.')
     } else {
-        avail_mem = (task.memory.mega * 0.8).intValue()
+        avail_mem = (task.memory.toMega() * 0.8).intValue()
     }
 
     """
@@ -23,13 +28,13 @@ process ESTIMATE_ANCESTRY {
     csvtk concat ${study_pcs} > study.ProPC.coord
 
     java -Xmx${avail_mem}M -jar /opt/imputationserver-utils/imputationserver-utils.jar \
-        estimate-ancestry \
-        --samples ${reference_samples} \
+        estimate-ancestry                    \
+        --samples ${reference_samples}       \
         --reference-pc ${reference_pc_coord} \
-        --study-pc study.ProPC.coord \
-        --max-pcs ${params.ancestry.max_pcs} \
-        --k ${params.ancestry.k} \
-        --threshold ${params.ancestry.threshold} \
+        --study-pc study.ProPC.coord         \
+        --max-pcs ${ancestry.max_pcs}        \
+        --k ${ancestry.k}                    \
+        --threshold ${ancestry.threshold}    \
         --output estimated-population.txt
     """
 }

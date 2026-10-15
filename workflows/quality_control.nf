@@ -6,12 +6,15 @@ workflow QUALITY_CONTROL {
     validated_files
     validation_report
     site_files_ch
+    refpanel
+    build
+    population // String
 
     main:
     def chain_file = []
-    def panel_version = params.refpanel.build
-    if (!panel_version.equals(params.build)) {
-        def name = params.build + "To" + panel_version + ".over.chain.gz"
+    def panel_version = refpanel.build
+    if (!panel_version.equals(build)) {
+        def name = build + "To" + panel_version + ".over.chain.gz"
         chain_file = file("${projectDir}/files/chains/" + name, checkIfExists: true)
     }
 
@@ -20,6 +23,8 @@ workflow QUALITY_CONTROL {
         site_files_ch,
         chain_file,
         panel_version,
+        refpanel,
+        population,
     )
 
     chunks_vcf_index = QUALITY_CONTROL_VCF.out.chunks_vcf
@@ -41,6 +46,7 @@ workflow QUALITY_CONTROL {
         validation_report,
         QUALITY_CONTROL_VCF.out.qc_report,
         file("${baseDir}/files/qc-report.Rmd", checkIfExists: true),
+        population
     )
 
     emit:

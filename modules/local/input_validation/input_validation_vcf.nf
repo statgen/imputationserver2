@@ -1,9 +1,14 @@
+// nextflow.enable.types =  true
+
 process INPUT_VALIDATION_VCF {
     label 'preprocessing'
     publishDir params.output, mode: 'copy', pattern: '*.{html,log}'
 
     input:
+    // population: String
+    val population
     path vcf_files
+    val refpanel
 
     output:
     path "*.vcf.gz", includeInputs: true, emit: validated_files
@@ -19,7 +24,7 @@ process INPUT_VALIDATION_VCF {
 
     """
     set +e
-    echo '${groovy.json.JsonOutput.toJson(params.refpanel)}' > reference-panel.json
+    echo '${groovy.json.JsonOutput.toJson(refpanel)}' > reference-panel.json
 
     # Verify if VCF files are valid
     for vcf in ${vcf_files}; do
@@ -36,7 +41,7 @@ process INPUT_VALIDATION_VCF {
     java -Xmx${avail_mem}M -jar /opt/imputationserver-utils/imputationserver-utils.jar \
         validate \
         --reference reference-panel.json \
-        --population ${params.population} \
+        --population ${population} \
         --build ${params.build} \
         --r2Filter ${params.imputation.min_r2} \
         --phasing ${params.phasing.engine} \

@@ -5,6 +5,8 @@ process COMPRESSION_ENCRYPTION_VCF {
 
     input:
     tuple val(chr), val(start), val(end), path(imputed_vcf_data), path(imputed_info), path(imputed_meta_vcf_data)
+    val encryption_password // String
+    val refpanel // RefPanelParams
 
     output:
     path "*.zip", emit: encrypted_file, optional: true
@@ -21,7 +23,7 @@ process COMPRESSION_ENCRYPTION_VCF {
     def zip_name = "chr_${chr}.zip"
     def info_name = "${prefix}.info.gz"
     def aes = params.encryption.aes ? "-mem=AES256" : ""
-    def panel_version = params.refpanel.id
+    def panel_version = refpanel.id
     def scale   = params.encryption.thread_scale ?: 1
     def threads = Math.max(1, Math.floor(task.cpus * scale) as int)
     def first_vcf = getFirstFile(imputed_vcf_data)
@@ -70,7 +72,7 @@ process COMPRESSION_ENCRYPTION_VCF {
     # zip files
     if [[ "${params.encryption.enabled}" = true ]]
     then
-        7z a -tzip ${aes} -mmt${threads} -p"${params.encryption_password}" ${zip_name} ${prefix}*
+        7z a -tzip ${aes} -mmt${threads} -p"${encryption_password}" ${zip_name} ${prefix}*
         rm *vcf.gz* *info.gz
     fi
 

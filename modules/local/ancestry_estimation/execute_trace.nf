@@ -1,17 +1,19 @@
+nextflow.enable.types =  true
+
 process EXECUTE_TRACE {
     label 'ancestry'
 
     input:
-    path samples
-    path vcf_file
-    path reference_site
-    path reference_range
-    path reference_geno
-    path reference_pc_coord
-    path reference_samples
+    samples: Path
+    vcf_file: Path
+    reference_site: Path
+    reference_range: Path
+    reference_geno: Path
+    reference_pc_coord: Path
+    reference_samples: Path
 
     output:
-    path ("${batch_name}.ProPC.coord"), emit: pcs
+    pcs: Path = file("${batch_name}.ProPC.coord")
 
     script:
     batch_name = "batch_${samples.baseName}"

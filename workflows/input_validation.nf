@@ -1,10 +1,13 @@
 include { INPUT_VALIDATION_VCF } from '../modules/local/input_validation/input_validation_vcf'
 
 workflow INPUT_VALIDATION {
-    main:
-    files = Channel.fromPath(params.files)
+    take:
+    population // String
+    files // Channel<Path>
+    refpanel//: RefPanelParams
 
-    INPUT_VALIDATION_VCF(files.collect())
+    main:
+    INPUT_VALIDATION_VCF(population, files.collect(), refpanel)
 
     emit:
     validated_files = INPUT_VALIDATION_VCF.out.validated_files.collect()

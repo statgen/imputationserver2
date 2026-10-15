@@ -1,18 +1,19 @@
+nextflow.enable.types = true
+
 process VISUALIZE_ANCESTRY {
     label 'ancestry'
     publishDir params.output, mode: 'copy'
 
     input:
-    path ancestry_estimation_report
-    path estimated_ancestry
-    path reference_pc_coord
-    path reference_samples
+    ancestry_estimation_report: Path
+    estimated_ancestry: Path
+    reference_pc_coord: Path
+    reference_samples: Path
 
     output:
-    path "*.html"
+    visualization: Set<Path> = files("*.html")
 
     script:
-
     """
     # create PCA plot
     Rscript -e "require( 'rmarkdown' ); render('${ancestry_estimation_report}',

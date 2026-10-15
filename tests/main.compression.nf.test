@@ -1,11 +1,9 @@
 nextflow_pipeline {
-
     name "Pipeline Tests for Compression/Encryption"
     script "main.nf"
 
 
     test("Should create tabix files") {
-
         when {
             params {
                 project  = "testPipelineWithPhasedAndMetaOption"
@@ -30,16 +28,12 @@ nextflow_pipeline {
 
         then {
             assert workflow.success
-
             assert file("${outputDir}/chr20.dose.vcf.gz.tbi").exists()
-
         }
-
     }
 
 
     test("Should not create tabix files") {
-
         when {
             params {
                 project  = "testPipelineWithPhasedAndMetaOption"
@@ -63,16 +57,12 @@ nextflow_pipeline {
 
         then {
             assert workflow.success
-
             assert !file("${outputDir}/chr20.dose.vcf.gz.tbi").exists()
-
         }
-
     }
 
 
     test("Should not create zip md5 files when encryption disabled") {
-
         when {
             params {
                 project  = "testPipelineWithPhasedAndMetaOption"
@@ -91,7 +81,6 @@ nextflow_pipeline {
                 encryption = [
                     enabled: false
                 ]
-                md5 = true
             }
         }
 
@@ -99,12 +88,10 @@ nextflow_pipeline {
             assert workflow.success
             assert !file("${outputDir}/chr_20.zip.md5").exists()
         }
-
     }
 
 
     test("Should create zip md5 files when encryption enabled") {
-
         when {
             params {
                 project  = "testPipelineWithPhasedAndMetaOption"
@@ -126,14 +113,11 @@ nextflow_pipeline {
         then {
             assert workflow.success
             assert file("${outputDir}/chr_20.zip.md5").exists()
-
         }
-
     }
 
 
     test("Should create imputed md5 files when encryption disabled") {
-
         when {
             params {
                 project  = "testPipelineWithPhasedAndMetaOption"
@@ -159,9 +143,6 @@ nextflow_pipeline {
         then {
             assert workflow.success
             assert file("${outputDir}/chr20.dose.vcf.gz.md5").exists()
-
         }
-
     }
-
 }

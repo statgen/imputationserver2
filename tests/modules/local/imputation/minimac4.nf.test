@@ -9,12 +9,20 @@ nextflow_process {
         when {
             params {
                 refpanel = [
-                    build: "hg19"
+                    id: "test-process-minimac4",
+                    build: "hg19",
+                    genotypes: "foo",
+                    sites: "bar",
+                    mapEagle: "baz",
+                    refEagle: "oof",
+                    populations: [
+                        [ id: "off", name: "Off", samples: -1 ],
+                    ]
                 ]
             }
             process {
                 """
-                input[0] = tuple "20", 1, 100000, "status", file("${projectDir}/tests/data/input/chr20-phased/chr20.R50.merged.1.330k.recode.small.vcf.gz"), file("${projectDir}/tests/data/refpanels/hapmap2/msavs/hapmap_r22.chr20.CEU.hg19.msav")
+                input[0] = tuple("20", 1, 100000, "status", file("${projectDir}/tests/data/input/chr20-phased/chr20.R50.merged.1.330k.recode.small.vcf.gz"), file("${projectDir}/tests/data/refpanels/hapmap2/msavs/hapmap_r22.chr20.CEU.hg19.msav"))
                 input[1] = []
                 input[2] = params.refpanel.build
                 input[3] = params.imputation.window
@@ -44,13 +52,21 @@ nextflow_process {
         when {
             params {
                 refpanel = [
-                    build: "hg19"
+                    id: "test-process-minimac4",
+                    build: "hg19",
+                    genotypes: "foo",
+                    sites: "bar",
+                    mapEagle: "baz",
+                    refEagle: "oof",
+                    populations: [
+                        [ id: "off", name: "Off", samples: -1 ],
+                    ]
                 ]
                 minimac_window = 5
             }
             process {
                 """
-                input[0] = tuple "20", 1, 100000, "status", file("${projectDir}/tests/data/input/chr20-phased/chr20.R50.merged.1.330k.recode.small.vcf.gz"), file("${projectDir}/tests/data/refpanels/hapmap2/msavs/hapmap_r22.chr20.CEU.hg19.msav")
+                input[0] = tuple("20", 1, 100000, "status", file("${projectDir}/tests/data/input/chr20-phased/chr20.R50.merged.1.330k.recode.small.vcf.gz"), file("${projectDir}/tests/data/refpanels/hapmap2/msavs/hapmap_r22.chr20.CEU.hg19.msav"))
                 input[1] = []
                 input[2] = params.refpanel.build
                 input[3] = params.imputation.window

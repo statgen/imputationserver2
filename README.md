@@ -86,7 +86,7 @@ nextflow run main.nf -c job.config
 | `ancestry.dim`                 | `10`                  | Ancestry analysis dimension                        |
 | `ancestry.dim_high`            | `20`                  | High dimension for ancestry analysis               |
 | `ancestry.batch_size`          | `50`                  | Batch size for ancestry analysis                   |
-| `ancestry.reference`           | `null`                | Ancestry reference data                            |
+| `ancestry.references`          | `null`                | Ancestry reference data                            |
 | `ancestry.max_pcs`             | `8`                   | Maximum principal components for ancestry          |
 | `ancestry.k`                   | `10`                  | K value for ancestry analysis                      |
 | `ancestry.threshold`           | `0.75`                | Ancestry threshold                                 |

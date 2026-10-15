@@ -1,26 +1,24 @@
 process QUALITY_CONTROL_VCF {
     label 'preprocessing'
     publishDir params.output, mode: 'copy', pattern: "qc_report.txt"
-    publishDir params.output, mode: 'copy', pattern: "${statisticsDir}/*.txt"
+    publishDir params.output, mode: 'copy', pattern: "statistics/*.txt"
 
     input:
     path vcf_files
     path site_files
     path chain_file
     val panel_version
+    val refpanel
+    val population // String
 
     output:
-    path "${metaFilesDir}/*", emit: chunks_csv, optional: true
-    path "${chunksDir}/*", emit: chunks_vcf
-    path "${statisticsDir}/*", optional: true
+    path "metafiles/*", emit: chunks_csv, optional: true
+    path "chunks/*", emit: chunks_vcf
+    path "statistics/*", optional: true
     path "maf.txt", emit: maf_file, optional: true
     path "qc_report.txt", emit: qc_report
 
     script:
-    chunksDir = 'chunks'
-    metaFilesDir = 'metafiles'
-    statisticsDir = 'statistics'
-    mafFile = 'maf.txt'
     def chain = (!panel_version.equals(params.build)) ? "--chain ${chain_file}": ''
     def avail_mem = 1024
     if (!task.memory) {
@@ -31,7 +29,7 @@ process QUALITY_CONTROL_VCF {
 
     """
     set +e
-    echo '${groovy.json.JsonOutput.toJson(params.refpanel)}' > reference-panel.json
+    echo '${groovy.json.JsonOutput.toJson(refpanel)}' > reference-panel.json
 
     # Verify if VCF files are valid
     for vcf in ${vcf_files}; do
@@ -46,32 +44,32 @@ process QUALITY_CONTROL_VCF {
     done
 
     # TODO: create directories in java
-    mkdir ${chunksDir}
-    mkdir ${metaFilesDir}
-    mkdir ${statisticsDir}
+    mkdir chunks
+    mkdir metafiles
+    mkdir statistics
     echo ${chain_file}
 
     java -Xmx${avail_mem}M -jar /opt/imputationserver-utils/imputationserver-utils.jar \
-        run-qc \
-        --reference reference-panel.json \
-        --population ${params.population} \
-        --build ${params.build} \
-        --chunksize ${params.chunksize} \
+        run-qc                                    \
+        --reference reference-panel.json          \
+        --population ${population}                \
+        --build ${params.build}                   \
+        --chunksize ${params.chunksize}           \
         --phasing-window ${params.phasing.window} \
-        --maf-output ${mafFile} \
-        --chunks-out ${chunksDir} \
-        --statistics-out ${statisticsDir} \
-        --metafiles-out ${metaFilesDir} \
-        --report qc_report.txt \
-        --no-index \
-        ${chain} \
+        --maf-output maf.txt                      \
+        --chunks-out chunks                       \
+        --statistics-out statistics               \
+        --metafiles-out metafiles                 \
+        --report qc_report.txt                    \
+        --no-index                                \
+        ${chain}                                  \
         ${vcf_files}
 
     exit_code_a=\$?
 
     # Check if QC step failed
     if [[ \$exit_code_a -ne 0 ]]; then
-        rm -rf ${metaFilesDir}
+        rm -rf metafiles
     fi
 
     cat qc_report.txt
