@@ -1,52 +1,68 @@
+nextflow.enable.types = true
+
+include { RefPanelParams ; PhasingParams } from '../types/params'
+
 include { QUALITY_CONTROL_VCF } from '../modules/local/quality_control/quality_control_vcf'
 include { QUALITY_CONTROL_REPORT } from '../modules/local/quality_control/quality_control_report'
 
 workflow QUALITY_CONTROL {
     take:
-    validated_files
-    validation_report
-    site_files_ch
-    refpanel
-    build
-    population // String
+    validated_files: Bag<Path>
+    validation_report: Path
+    site_files: Bag<Path>
+    refpanel: RefPanelParams
+    phasing: PhasingParams
+    build: String
+    population: String
+    chunksize: Integer
 
     main:
-    def chain_file = []
-    def panel_version = refpanel.build
-    if (!panel_version.equals(build)) {
-        def name = build + "To" + panel_version + ".over.chain.gz"
-        chain_file = file("${projectDir}/files/chains/" + name, checkIfExists: true)
+    def chain_file: Path? = null
+    if (build != refpanel.build) {
+        chain_file = file(
+            "${projectDir}/files/chains/${build}To${refpanel.build}.over.chain.gz",
+            checkIfExists: true,
+        )
     }
 
-    QUALITY_CONTROL_VCF(
+    qc = QUALITY_CONTROL_VCF(
         validated_files,
-        site_files_ch,
+        site_files,
         chain_file,
-        panel_version,
         refpanel,
+        phasing,
         population,
+        build,
+        chunksize,
     )
 
-    chunks_vcf_index = QUALITY_CONTROL_VCF.out.chunks_vcf
-        .flatten()
-        .map { it -> tuple(file(it).baseName, it) }
+    chunks_vcf_index = qc.chunks_vcf
+        .flatMap { paths -> paths } // Convert from Value<Set<Path>> to Channel<Path>
+        .map { path -> record(key: path.baseName, vcf: path) }
 
-    chunks_csv_index = QUALITY_CONTROL_VCF.out.chunks_csv
-        .flatten()
-        .splitCsv(header: false, sep: '\t')
-        .map { row -> tuple(file(row[4]).baseName, row[0], row[1], row[2], row[3], row[4], row[5], row[6]) }
+    chunks_csv_index = qc.chunks_csv
+        .flatMap { paths -> paths } // Convert from Value<Set<Path>> to Channel<Path>
+        .flatMap { path -> path.splitCsv(header: false, sep: '\t') as List<List<String>> }
+        .map { row -> record(
+            key: file(row[4]).baseName,
+            chr: row[0],
+            start: row[1],
+            end: row[2],
+            phasing_status: row[3],
+            // snps: row[5],
+            // in_reference: row[6],
+        ) }
 
     metafiles_ch = chunks_csv_index
-        .combine(chunks_vcf_index, by: 0)
-        .map { row -> tuple(row[1], row[2], row[3], row[4], file(row[8])) }
-
+        .join(chunks_vcf_index, by: 'key') // JOIN in the SQL sense.
+        .map { row -> tuple(row.chr, row.start, row.end, row.phasing_status, row.vcf) }
 
     QUALITY_CONTROL_REPORT(
-        QUALITY_CONTROL_VCF.out.maf_file.ifEmpty([]),
+        qc.maf_file,
         validation_report,
-        QUALITY_CONTROL_VCF.out.qc_report,
+        qc.qc_report,
         file("${baseDir}/files/qc-report.Rmd", checkIfExists: true),
-        population
+        population,
     )
 
     emit:

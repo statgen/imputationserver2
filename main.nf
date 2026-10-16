@@ -9,6 +9,8 @@ Author: TOPMed Imputation Server Team
 ---------------------------
  */
 
+// nextflow.enable.types = true
+
 include {
     RefPanelParams ;
     PhasingParams ;
@@ -92,7 +94,7 @@ workflow {
 
     // Find site files from full pattern and make site file pattern relative
     sites_pattern = "${refpanel.sites}"
-    sites = "./${file(refpanel.sites).fileName}"
+    sites = "./${file(refpanel.sites).name}"
 
     site_files_ch = channel.of(1..22, 'X', 'MT')
         .map { it ->
@@ -113,49 +115,60 @@ workflow {
     println("Welcome to ${params.service.name} (${workflow.manifest.version})")
 
     if (params.imputation.enabled) {
-        INPUT_VALIDATION(population, files, refpanel)
+        validation = INPUT_VALIDATION(
+            population,
+            files,
+            refpanel,
+            params.imputation,
+            params.phasing,
+            params.build,
+            params.mode,
+            params.chunksize,
+            params.min_samples,
+            params.max_samples,
+        )
 
-        QUALITY_CONTROL(
-            INPUT_VALIDATION.out.validated_files,
-            INPUT_VALIDATION.out.validation_report,
+        qc = QUALITY_CONTROL(
+            validation.validated_files,
+            validation.validation_report,
             site_files_ch.collect(),
             refpanel,
+            params.phasing,
             params.build,
             population,
+            params.chunksize,
         )
 
         // check if QC chunks exist in case QC failed
-        QUALITY_CONTROL.out.qc_metafiles.ifEmpty {
+        qc.qc_metafiles.ifEmpty {
             error("QC step failed")
         }
 
         if (params.mode == 'imputation') {
-            phased_ch = QUALITY_CONTROL.out.qc_metafiles
+            phased_ch = qc.qc_metafiles
 
             if (phasing_engine != 'no_phasing') {
-                PHASING(QUALITY_CONTROL.out.qc_metafiles, refpanel)
-                phased_ch = PHASING.out.phased_ch
+                phasing = PHASING(qc.qc_metafiles, refpanel)
+                phased_ch = phasing.phased_ch
             }
 
-            IMPUTATION(refpanel, params.imputation, phased_ch)
+            imputation = IMPUTATION(refpanel, params.imputation, phased_ch)
 
             if (params.merge_results == true) {
-                ENCRYPTION(IMPUTATION.out.groupTuple(), encryption_password, refpanel)
+                ENCRYPTION(imputation.groupTuple(), encryption_password, refpanel)
             }
         }
     }
 
     ancestry_enabled = (params.ancestry != null) && params.ancestry.enabled
 
+    def estimated_ancestry = channel.empty()
     if (ancestry_enabled) {
-        ANCESTRY_ESTIMATION(files, params.ancestry, params.build)
+        estimated_ancestry = ANCESTRY_ESTIMATION(files, params.ancestry, params.build)
     }
 
     if (params.pgs.enabled) {
-        PGS_CALCULATION(
-            IMPUTATION.out,
-            ancestry_enabled ? ANCESTRY_ESTIMATION.out : channel.empty(),
-        )
+        PGS_CALCULATION(imputation, estimated_ancestry)
     }
 
     onComplete:

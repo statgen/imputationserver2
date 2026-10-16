@@ -38,7 +38,6 @@ suppressPackageStartupMessages({
 
 ## Statistics
 ```{r echo=FALSE, warning=FALSE}
-
 # Define the function
 parse_report <- function(file_path) {
   # Read the entire file content
@@ -56,16 +55,15 @@ parse_report <- function(file_path) {
     filter(!is.na(Parameter) & Parameter != "") %>%
     # Convert the tibble to a data frame
     as.data.frame()
-  
-   # Return the result as a data frame
+
+  # Return the result as a data frame
   return(result_df)
 }
 
 # Define the path to the log file
 validation <- parse_report(params$validation_report)
 qc <- parse_report(params$qc_report)
-kable(rbind(validation,qc))
-
+kable(rbind(validation, qc))
 ```
 
 ## Allele-Frequency Correlation
@@ -76,59 +74,57 @@ The plot shows the densities of frequencies falling into each part. The first 50
 
 ```{r echo=FALSE}
 if (params$allele_frequency_population != "off") {
+  data <- read.table(params$maf_file, header = TRUE, sep = "\t")
 
-    data <- read.table(params$maf_file, header = TRUE, sep="\t")
-    
-    lm_eqn <- function(df){
-        m <- lm(REFERENCE_AAF ~ AAF, df)
-        eq <- paste('r2 =', format(summary(m)$r.squared, digits = 3))
-        as.character(as.expression(eq))
-    }
+  lm_eqn <- function(df) {
+    m <- lm(REFERENCE_AAF ~ AAF, df)
+    eq <- paste("r2 =", format(summary(m)$r.squared, digits = 3))
+    as.character(as.expression(eq))
+  }
 
-    smoothScatter(data$AAF, data$REFERENCE_AAF, nrpoints = 5000, xlim = c(0, 1),
-                  xlab = "Ref Allele Frequency (Uploaded Samples)", 
-                  ylab = "Ref Allele Frequency (Reference Panel)", useRaster = TRUE)
-    legend("topleft", legend = lm_eqn(data), bty = "n", pch = NA)
+  smoothScatter(data$AAF, data$REFERENCE_AAF,
+    nrpoints = 5000, xlim = c(0, 1),
+    xlab = "Ref Allele Frequency (Uploaded Samples)",
+    ylab = "Ref Allele Frequency (Reference Panel)", useRaster = TRUE
+  )
+  legend("topleft", legend = lm_eqn(data), bty = "n", pch = NA)
 } else {
-    cat("Allele Frequency Check is disabled.")
+  cat("Allele Frequency Check is disabled.")
 }
-
 ```
 
 ### Potential Frequency Mismatches
 
-Markers where chisq is greater than 300. 
+Markers where chisq is greater than 300.
 
 ```{r echo=FALSE}
-
 if (params$allele_frequency_population != "off") {
-    
-    filtered_data <- data %>%
-      filter(CHISQ > 300)
+  filtered_data <- data %>%
+    filter(CHISQ > 300)
 
-    chisq_length <- nrow(filtered_data)
-    if(chisq_length > 0) {
-      cat("Total mismatches:", chisq_length, "\n")
-    } else {
-        cat("No mismatches detected.")
-    }
+  chisq_length <- nrow(filtered_data)
+  if (chisq_length > 0) {
+    cat("Total mismatches:", chisq_length, "\n")
+  } else {
+    cat("No mismatches detected.")
+  }
 
-    if (chisq_length > 0) {
-        # Print the first 5000 mismatches
-        for (i in 1:min(5000, chisq_length)) {
-            cat("Mismatched frequencies for '", filtered_data$ID[i], "' f[", filtered_data$REF[i], ",", filtered_data$ALT[i],"] = [", (1-filtered_data$AAF[i]), ",", filtered_data$AAF[i],"] vs [", (1-filtered_data$REFERENCE_AAF[i]), ",", filtered_data$REFERENCE_AAF[i],"], chisq ", filtered_data$CHISQ[i], "\n", sep = "")
-        }
-        if (chisq_length > 5000) {
-            cat("Report outputs only first 5000 mismatches.")
-        }
+  if (chisq_length > 0) {
+    # Print the first 5000 mismatches
+    for (i in 1:min(5000, chisq_length)) {
+      cat("Mismatched frequencies for '", filtered_data$ID[i], "' f[", filtered_data$REF[i], ",", filtered_data$ALT[i], "] = [", (1 - filtered_data$AAF[i]), ",", filtered_data$AAF[i], "] vs [", (1 - filtered_data$REFERENCE_AAF[i]), ",", filtered_data$REFERENCE_AAF[i], "], chisq ", filtered_data$CHISQ[i], "\n", sep = "")
     }
+    if (chisq_length > 5000) {
+      cat("Report outputs only first 5000 mismatches.")
+    }
+  }
 } else {
-    cat("Allele Frequency Check is disabled.")
+  cat("Allele Frequency Check is disabled.")
 }
 ```
 
 ---
 
 <small>
-This report has been created with **`r params$service` (`r params$version`)**.
+  This report has been created with **`r params$service` (`r params$version`)**.
 </small>

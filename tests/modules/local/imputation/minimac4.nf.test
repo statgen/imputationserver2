@@ -9,15 +9,7 @@ nextflow_process {
         when {
             params {
                 refpanel = [
-                    id: "test-process-minimac4",
-                    build: "hg19",
-                    genotypes: "foo",
-                    sites: "bar",
-                    mapEagle: "baz",
-                    refEagle: "oof",
-                    populations: [
-                        [ id: "off", name: "Off", samples: -1 ],
-                    ]
+                    build: "hg19"
                 ]
             }
             process {
@@ -52,15 +44,7 @@ nextflow_process {
         when {
             params {
                 refpanel = [
-                    id: "test-process-minimac4",
-                    build: "hg19",
-                    genotypes: "foo",
-                    sites: "bar",
-                    mapEagle: "baz",
-                    refEagle: "oof",
-                    populations: [
-                        [ id: "off", name: "Off", samples: -1 ],
-                    ]
+                    build: "hg19"
                 ]
                 minimac_window = 5
             }

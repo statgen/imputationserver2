@@ -1,16 +1,18 @@
+nextflow.enable.types = true
+
 process QUALITY_CONTROL_REPORT {
     label 'preprocessing'
     publishDir params.output, mode: 'copy'
 
     input:
-    path maf_file
-    path validation_report
-    path qc_report
-    path qc_report_file
-    val population // String
+    maf_file: Path? // TODO: render() might break if population != "off" and maf_file == null.
+    validation_report: Path
+    qc_report: Path
+    qc_report_file: Path
+    population: String
 
     output:
-    path "*.html"
+    reports: Set<Path> = files("*.html")
 
     script:
     """
