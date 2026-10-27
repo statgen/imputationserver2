@@ -1,69 +1,78 @@
+nextflow.enable.types = true
+
+include { RefPanelParams ; PhasingParams } from '../types/params'
+include { VcfMetafile } from '../types/workflow'
+
 include { EAGLE } from '../modules/local/phasing/eagle'
 include { BEAGLE } from '../modules/local/phasing/beagle'
 
 workflow PHASING {
     take:
-    metafiles_ch
-    refpanel // RefPanelParams
+    metafiles: Channel<VcfMetafile>
+    refpanel: RefPanelParams
+    phasing: PhasingParams
+    threads: Integer
 
     main:
-    chromosomes = channel.of(1..22, 'X.nonPAR', 'X.PAR1', 'X.PAR2', 'MT')
+    def phased_ch: Channel<VcfMetafile>
 
-    if (params.phasing.engine == 'eagle' && refpanel.refEagle != null) {
+    def chromosomes = channel.fromList(1..22)
+        .map { chr -> "${chr}" }
+        .mix(channel.of('X.nonPAR', 'X.PAR1', 'X.PAR2', 'MT'))
 
-        phasing_map_ch = file(refpanel.mapEagle, checkIfExists: true)
+    if (phasing.engine == 'eagle') {
+        if (refpanel.refEagle == null || refpanel.mapEagle == null) {
+            error('Eagle requires refpanel.refEagle and refpanel.mapEagle')
+        }
 
-        phasing_reference_ch = chromosomes
-            .map {
-                it ->
-                    def eagle_file = file(PatternUtil.parse(refpanel.refEagle, [chr: it]))
-                    def eagle_file_index = file(PatternUtil.parse(refpanel.refEagle + ".csi", [chr: it]))
-                    if(!eagle_file.exists() || !eagle_file_index.exists()){
-                        return null
-                    }
-                    return tuple(it.toString(),eagle_file,eagle_file_index)
+        phasing_map = file(refpanel.mapEagle, checkIfExists: true)
+
+        def eagle_references = chromosomes
+            .map { chr ->
+                record(
+                    chr: chr,
+                    bcf: file(PatternUtil.parse(refpanel.refEagle, [chr: chr])),
+                    bcf_csi: file(PatternUtil.parse(refpanel.refEagle + ".csi", [chr: chr])),
+                )
             }
+            .filter { ref -> ref.bcf.exists() && ref.bcf_csi.exists() }
 
-        eagle_bcf_metafiles_ch = phasing_reference_ch.combine(metafiles_ch, by: 0)
+        def eagle_bcf_metafiles_ch = eagle_references.join(metafiles, by: 'chr')
 
-        EAGLE(eagle_bcf_metafiles_ch, phasing_map_ch, refpanel)
-
-        phased_ch = EAGLE.out.eagle_phased_ch
-
+        phased_ch = EAGLE(
+            eagle_bcf_metafiles_ch,
+            phasing_map,
+            refpanel.build,
+            phasing.window,
+            threads,
+        )
     }
+    else if (phasing.engine == 'beagle') {
+        if (refpanel.refBeagle == null || refpanel.mapBeagle == null) {
+            error('Beagle requires refpanel.refBeagle and refpanel.mapBeagle')
+        }
 
-    if (params.phasing.engine == 'beagle' && refpanel.refBeagle != null) {
-
-        phasing_reference_ch = chromosomes
-            .map {
-                it ->
-                    def beagle_file = file(PatternUtil.parse(refpanel.refBeagle, [chr: it]))
-                    if(!beagle_file.exists()){
-                        return null
-                    }
-                    return tuple(it.toString(),beagle_file)
+        def beagle_references = chromosomes
+            .map { chr ->
+                record(
+                    chr: chr,
+                    bcf: file(PatternUtil.parse(refpanel.refBeagle, [chr: chr])),
+                    map_beagle: file(PatternUtil.parse(refpanel.mapBeagle, [chr: chr])),
+                )
             }
+            .filter { ref -> ref.bcf.exists() && ref.map_beagle.exists() }
 
-        phasing_map_ch = chromosomes
-            .map {
-                it ->
-                    def beagle_map_file = file(PatternUtil.parse(refpanel.mapBeagle, [chr: it]))
-                    if(!beagle_map_file.exists()){
-                        return null
-                    }
-                    return tuple(it.toString(),beagle_map_file)
-            }
+        def beagle_bcf_metafiles_ch = beagle_references.join(metafiles, by: 'chr')
 
-        beagle_bcf_metafiles_ch = phasing_reference_ch.combine(metafiles_ch, by: 0)
-
-        //combine with map since also split by chromsome
-        beagle_bcf_metafiles_map_ch = beagle_bcf_metafiles_ch.combine(phasing_map_ch, by: 0)
-
-        BEAGLE(beagle_bcf_metafiles_map_ch, refpanel)
-
-        phased_ch = BEAGLE.out.beagle_phased_ch
+        phased_ch = BEAGLE(
+            beagle_bcf_metafiles_ch,
+            refpanel.build,
+        )
+    }
+    else {
+        error("Unrecognized phasing engine: ${phasing.engine}")
     }
 
     emit:
-    phased_ch
+    phased: Channel<VcfMetafile> = phased_ch
 }

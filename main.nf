@@ -23,6 +23,8 @@ include {
     PgsCatalogParams
 } from './types/params'
 
+include { VcfMetafile } from './types/workflow'
+
 params {
     project: String
     project_id: String? = null
@@ -140,22 +142,40 @@ workflow {
         )
 
         // check if QC chunks exist in case QC failed
-        qc.qc_metafiles.ifEmpty {
+        qc.metafiles.ifEmpty {
             error("QC step failed")
         }
 
         if (params.mode == 'imputation') {
-            phased_ch = qc.qc_metafiles
+            def phased_ch: Channel<VcfMetafile> = qc.metafiles
 
             if (phasing_engine != 'no_phasing') {
-                phasing = PHASING(qc.qc_metafiles, refpanel)
-                phased_ch = phasing.phased_ch
+                phasing = PHASING(qc.metafiles, refpanel, params.phasing, params.service.threads)
+                phased_ch = phasing.phased
             }
 
-            imputation = IMPUTATION(refpanel, params.imputation, phased_ch)
+            imputation = IMPUTATION(
+                refpanel,
+                params.imputation,
+                phased_ch,
+                params.service.threads,
+            )
+
+            // TEMPORARY: Mapping imputation result to old format so we can test and verify.
+            def imputation_OLD = imputation.imputed_chunks.map { chunk ->
+                tuple(
+                    chunk.chr,
+                    chunk.start,
+                    chunk.end,
+                    chunk.dose,
+                    chunk.info,
+                    chunk.empirical_dose,
+                )
+            }
+            // !TEMPORARY
 
             if (params.merge_results == true) {
-                ENCRYPTION(imputation.groupTuple(), encryption_password, refpanel)
+                ENCRYPTION(imputation_OLD.groupTuple(), encryption_password, refpanel)
             }
         }
     }
@@ -192,7 +212,7 @@ workflow {
         }
 
         println("::error:: Imputation job ${statusMessage}.")
-        exit()
+        exit(1)
     }
 
     //submit counters for successful imputation jobs

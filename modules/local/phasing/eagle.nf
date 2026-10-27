@@ -1,31 +1,44 @@
+nextflow.enable.types = true
+
+include { RefPanelParams ; PhasingParams } from '../../../types/params'
+include { VcfMetafile ; EagleInput } from '../../../types/workflow'
+
 process EAGLE {
     label 'phasing'
-    tag "${chunkfile}"
+    tag "${in.vcf}"
 
     input:
-    tuple val(chr), path(bcf), path(bcf_csi), val(start), val(end), val(phasing_status), path(chunkfile)
-    path map_eagle
-    val refpanel // RefPanelParams
+    in: EagleInput
+    map_eagle: Path
+    build: String
+    phasing_window: Integer
+    threads: Integer
 
     output:
-    tuple val(chr), val(start), val(end), val(phasing_status), file("*.phased.vcf.gz"), emit: eagle_phased_ch
+    phased: VcfMetafile = record(
+        chr: in.chr,
+        start: in.start,
+        end: in.end,
+        phasing_status: in.phasing_status,
+        vcf: file("*.phased.vcf.gz"),
+    )
 
     script:
-    //define basename without ending (do not use simpleName due to X.*)
-    def chunkfile_name = chunkfile.toString().replaceAll('.vcf.gz', '')
+    // Essentially baseName (but we remove two extensions and we accept names with dots: X.*)
+    def chunkfile_name = in.vcf.name.replaceAll('.vcf.gz', '')
     // replace X.nonPAR etc with X for phasing
-    def chr_cleaned = chr.startsWith('X.') ? 'X' : chr
-    def chr_mapped = refpanel.build == 'hg38' ? 'chr' + chr_cleaned : chr_cleaned
-    def phasing_start = start.toLong() - params.phasing.window
+    def chr_clean = in.chr.startsWith('X.') ? 'X' : in.chr
+    def chr_mapped = build == 'hg38' ? 'chr' + chr_clean : chr_clean
+    def phasing_start = in.start.toLong() - phasing_window
     phasing_start = phasing_start < 0 ? 1 : phasing_start
-    def phasing_end = end.toLong() + params.phasing.window
-    def used_threads = params.service.threads != -1 ? params.service.threads : task.cpus
+    def phasing_end = in.end.toLong() + phasing_window
+    def used_threads = threads != -1 ? threads : task.cpus
 
     """
-    tabix ${chunkfile}
+    tabix ${in.vcf}
     eagle \
-        --vcfRef ${bcf}  \
-        --vcfTarget ${chunkfile} \
+        --vcfRef ${in.bcf}  \
+        --vcfTarget ${in.vcf} \
         --geneticMapFile ${map_eagle} \
         --outPrefix ${chunkfile_name}.phased \
         --chrom ${chr_mapped} \

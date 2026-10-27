@@ -1,41 +1,52 @@
-process MINIMAC4 {
+nextflow.enable.types = true
 
+include { MinimacInput ; ImputedChunk } from '../../../types/workflow'
+
+process MINIMAC4 {
     label 'imputation'
-    tag "${chunkfile}"
+    tag "${in.vcf}"
 
     input:
-    tuple val(chr), val(start), val(end), val(phasing_status), path(chunkfile), path(m3vcf)
-    path minimac_map
-    val refpanel_build
-    val minimac_window
-    val minimac_min_ratio
-    val min_r2
-    val decay
-    val diffThreshold
-    val probThreshold
-    val probThresholdS1
-    val minRecombination
+    in: MinimacInput
+    minimac_map: Path?
+    refpanel_build: String
+    minimac_window: Integer
+    minimac_min_ratio: Float
+    min_r2: Float
+    decay: Float
+    diffThreshold: Float
+    probThreshold: Float
+    probThresholdS1: Float
+    minRecombination: Float
+    threads: Integer
 
     output:
-    tuple val(chr_cleaned), val(start), val(end), file("*.dose.vcf.gz"), file("*.info.gz"), file("*.empiricalDose.vcf.gz"), emit: imputed_chunks
+    imputed_chunks: ImputedChunk = record(
+        chr: chr_clean,
+        start: in.start,
+        end: in.end,
+        dose: file("*.dose.vcf.gz"),
+        info: file("*.info.gz"),
+        empirical_dose: file("*.empiricalDose.vcf.gz"),
+    )
 
     script:
-    map = minimac_map ? '--map ' + minimac_map : ''
-    r2_filter = min_r2 != 0 ? '--min-r2 ' + min_r2 : ''
-    diff_threshold = diffThreshold != -1 ? '--diff-threshold ' + diffThreshold : ''
-    prob_threshold = probThreshold != -1 ? '--prob-threshold ' + probThreshold : ''
-    prob_threshold_s1 = probThresholdS1 != -1 ? '--prob-threshold-s1 ' + probThresholdS1 : ''
-    min_recom = minRecombination != -1 ? '--min-recom ' + minRecombination : ''
-    chunkfile_name = chunkfile.toString().replaceAll('.vcf.gz', '')
-    chr_cleaned = chr.startsWith('X.') ? 'X' : chr
-    chr_mapped = (refpanel_build == 'hg38') ? 'chr' + chr_cleaned : chr_cleaned
-    used_threads = params.service.threads != -1 ? params.service.threads : task.cpus
+    def map = minimac_map ? '--map ' + "${minimac_map}" : ''
+    def r2_filter = min_r2 != 0 ? '--min-r2 ' + "${min_r2}" : ''
+    def diff_threshold = diffThreshold != -1 ? '--diff-threshold ' + "${diffThreshold}" : ''
+    def prob_threshold = probThreshold != -1 ? '--prob-threshold ' + "${probThreshold}" : ''
+    def prob_threshold_s1 = probThresholdS1 != -1 ? '--prob-threshold-s1 ' + "${probThresholdS1}" : ''
+    def min_recom = minRecombination != -1 ? '--min-recom ' + "${minRecombination}" : ''
+    def chunkfile_name = in.vcf.name.replaceAll('.vcf.gz', '')
+    chr_clean = in.chr.startsWith('X.') ? 'X' : in.chr
+    def chr_mapped = (refpanel_build == 'hg38') ? 'chr' + chr_clean : chr_clean
+    def used_threads = (threads != -1) ? threads : task.cpus
 
     """
-    tabix ${chunkfile}
+    tabix ${in.vcf}
 
     minimac4 \
-        --region ${chr_mapped}:${start}-${end} \
+        --region ${chr_mapped}:${in.start}-${in.end} \
         --overlap ${minimac_window} \
         --output ${chunkfile_name}.dose.vcf.gz \
         --output-format vcf.gz \
@@ -53,7 +64,7 @@ process MINIMAC4 {
         ${min_recom} \
         ${r2_filter} \
         ${map} \
-        ${m3vcf} \
-        ${chunkfile}
+        ${in.m3vcf} \
+        ${in.vcf}
     """
 }
