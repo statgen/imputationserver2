@@ -168,7 +168,7 @@ workflow {
                     params.phasing.engine,
                     refpanel,
                     params.imputation,
-                    params.encryption
+                    params.encryption,
                 )
             }
         }
@@ -176,13 +176,13 @@ workflow {
 
     ancestry_enabled = (params.ancestry != null) && params.ancestry.enabled
 
-    def estimated_ancestry = channel.empty()
+    def estimated_ancestry = null
     if (ancestry_enabled) {
         estimated_ancestry = ANCESTRY_ESTIMATION(files, params.ancestry, params.build)
     }
 
     if (params.pgs.enabled) {
-        PGS_CALCULATION(imputation, estimated_ancestry)
+        PGS_CALCULATION(imputation, estimated_ancestry, params.pgs, params.pgscatalog)
     }
 
     onComplete:

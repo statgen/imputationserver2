@@ -1,3 +1,8 @@
+nextflow.enable.types = true
+
+include { PgsParams ; PgsCatalogParams } from '../types/params'
+include { ImputedChunk } from '../types/workflow'
+
 include { CALCULATE_CHUNKS } from '../modules/local/pgs_calculation/calculate_chunks'
 include { MERGE_CHUNKS_INFOS } from '../modules/local/pgs_calculation/merge_chunks_infos'
 include { MERGE_CHUNKS_SCORES } from '../modules/local/pgs_calculation/merge_chunks_scores'
@@ -6,38 +11,43 @@ include { FILTER_BY_CATEGORY } from '../modules/local/pgs_calculation/filter_by_
 
 workflow PGS_CALCULATION {
     take:
-    imputed_chunks
-    estimated_ancestry
+    imputed_chunks: Channel<ImputedChunk>
+    estimated_ancestry: Value<Path?>
+    pgs: PgsParams
+    pgsCatalog: PgsCatalogParams
 
     main:
-    scores_txt = file(params.pgscatalog.scores, checkIfExists: true)
-    scores_info = file(params.pgscatalog.scores + ".info", checkIfExists: true)
-    scores_index = file(params.pgscatalog.scores + ".tbi", checkIfExists: true)
-    scores_meta = file(params.pgscatalog.meta, checkIfExists: true)
+    scores_txt = file(pgsCatalog.scores, checkIfExists: true)
+    scores_info = file("${pgsCatalog.scores}.info", checkIfExists: true)
+    scores_index = file("${pgsCatalog.scores}.tbi", checkIfExists: true)
+    scores_meta = file(pgsCatalog.meta, checkIfExists: true)
 
-    FILTER_BY_CATEGORY(
+    def filtered_scores = FILTER_BY_CATEGORY(
         scores_meta,
-        params.pgs.category,
+        pgs.category,
     )
 
-    CALCULATE_CHUNKS(
+    def calculated_chunks = CALCULATE_CHUNKS(
         imputed_chunks,
-        tuple(scores_txt, scores_info, scores_index),
-        FILTER_BY_CATEGORY.out.scores,
+        scores_txt,
+        scores_info,
+        scores_index,
+        filtered_scores,
+        pgs,
     )
 
-    MERGE_CHUNKS_SCORES(
-        CALCULATE_CHUNKS.out.scores_chunks.collect()
+    def merged_scores = MERGE_CHUNKS_SCORES(
+        calculated_chunks.scores.collect()
     )
 
-    MERGE_CHUNKS_INFOS(
-        CALCULATE_CHUNKS.out.info_chunks.collect()
+    def merged_infos = MERGE_CHUNKS_INFOS(
+        calculated_chunks.info.collect()
     )
 
     CREATE_HTML_REPORT(
-        MERGE_CHUNKS_SCORES.out.collect(),
-        MERGE_CHUNKS_INFOS.out.collect(),
+        merged_scores,
+        merged_infos,
         scores_meta,
-        estimated_ancestry.collect().ifEmpty([]),
+        estimated_ancestry,
     )
 }

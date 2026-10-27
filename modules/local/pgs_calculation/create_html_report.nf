@@ -1,25 +1,29 @@
+nextflow.enable.types = true
+
 process CREATE_HTML_REPORT {
     label 'pgs'
     publishDir params.output, mode: 'copy'
 
     input:
-    path merged_score
-    path merged_info
-    path scores_meta
-    path estimated_ancestry
+    merged_score: Path
+    merged_info: Path
+    scores_meta: Path
+    estimated_ancestry: Path?
 
     output:
-    path "scores.html", emit: html_report
-    path "scores.report.zip", emit: zip_report
-    path "scores.coverage", emit: coverage_report
+    html_report: Path = file("scores.html")
+    zip_report: Path = file("scores.report.zip")
+    coverage_report: Path = file("scores.coverage")
 
     script:
-    samples = (params.ancestry != null && params.ancestry != "" && params.ancestry.enabled) ? "--samples ${estimated_ancestry}" : ""
-    def avail_mem = 1024
+    def samples = (estimated_ancestry != null) ? "--samples ${estimated_ancestry}" : ""
+
+    def avail_mem: Integer = 1024
     if (!task.memory) {
         log.info('[CREATE_HTML_REPORT] Available memory not known - defaulting to 1GB. Specify process memory requirements to change this.')
-    } else {
-        avail_mem = (task.memory.mega * 0.8).intValue()
+    }
+    else {
+        avail_mem = (task.memory.toMega() * 0.8).intValue()
     }
 
     """
