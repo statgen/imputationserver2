@@ -161,21 +161,15 @@ workflow {
                 params.service.threads,
             )
 
-            // TEMPORARY: Mapping imputation result to old format so we can test and verify.
-            def imputation_OLD = imputation.imputed_chunks.map { chunk ->
-                tuple(
-                    chunk.chr,
-                    chunk.start,
-                    chunk.end,
-                    chunk.dose,
-                    chunk.info,
-                    chunk.empirical_dose,
-                )
-            }
-            // !TEMPORARY
-
             if (params.merge_results == true) {
-                ENCRYPTION(imputation_OLD.groupTuple(), encryption_password, refpanel)
+                ENCRYPTION(
+                    imputation,
+                    encryption_password,
+                    params.phasing.engine,
+                    refpanel,
+                    params.imputation,
+                    params.encryption
+                )
             }
         }
     }

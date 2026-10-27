@@ -1,39 +1,55 @@
+nextflow.enable.types = true
+
+include { RefPanelParams ; ImputationParams ; EncryptionParams } from '../../../types/params'
+include { ImputedChunk } from '../../../types/workflow'
+
 process COMPRESSION_ENCRYPTION_VCF {
     label 'postprocessing'
     publishDir params.output, mode: 'copy'
     tag "Merge Chromosome ${chr}"
 
     input:
-    tuple val(chr), val(start), val(end), path(imputed_vcf_data), path(imputed_info), path(imputed_meta_vcf_data)
-    val encryption_password // String
-    val refpanel // RefPanelParams
+    tuple(chr: String, chunks: Bag<ImputedChunk>)
+    password: String
+    phasing_engine: String
+    refpanel: RefPanelParams
+    imputation: ImputationParams
+    encryption: EncryptionParams
 
     output:
-    path "*.zip", emit: encrypted_file, optional: true
-    path "*.md5", emit: md5_file, optional: true
-    path "chr${chr}*", emit: raw_files, optional: true
+    encrypted_file: Path? = file("*.zip", optional: true)
+    md5_file: Path? = file("*.md5", optional: true)
+    raw_files: Set<Path> = files("chr${chr}*", optional: true)
 
     script:
-    def imputed_joined = processFileList(imputed_vcf_data)
-    def meta_joined = processFileList(imputed_meta_vcf_data)
-    def info_joined = processFileList(imputed_info)
+    def sorted_chunks: List<ImputedChunk> = chunks.toSorted { chunk ->
+        chunk.dose.name
+            .replaceAll('PAR1', '1')
+            .replaceAll('nonPAR', '2')
+            .replaceAll('PAR2', '3')
+    }
+
+    def imputed_joined = sorted_chunks.collect { chunk -> chunk.dose }.join(' ')
+    def info_joined = sorted_chunks.collect { chunk -> chunk.info }.join(' ')
+    def meta_joined = sorted_chunks.collect { chunk -> chunk.empirical_dose }.join(' ')
+
     def prefix = "chr${chr}"
     def imputed_name = "${prefix}.dose.vcf.gz"
     def meta_name = "${prefix}.empiricalDose.vcf.gz"
     def zip_name = "chr_${chr}.zip"
     def info_name = "${prefix}.info.gz"
-    def aes = params.encryption.aes ? "-mem=AES256" : ""
+    def aes = encryption.aes ? '-mem=AES256' : ''
     def panel_version = refpanel.id
-    def scale   = params.encryption.thread_scale ?: 1
-    def threads = Math.max(1, Math.floor(task.cpus * scale) as int)
-    def first_vcf = getFirstFile(imputed_vcf_data)
+    def scale = encryption.thread_scale ?: 1
+    def threads = Math.max(1, task.cpus * scale)
+    def first_vcf = sorted_chunks[0].dose
 
     """
     # concat info files
     bcftools concat --threads ${threads} -n ${info_joined} -o ${info_name} -Oz
 
     # annotate files
-    if [[ "${params.encryption.annotate}" = true ]]
+    if [[ "${encryption.annotate}" = true ]]
     then
         # Extracting the original header then paste the new one
         bcftools view -h "${first_vcf}" > header_from_chunk.txt
@@ -70,39 +86,23 @@ process COMPRESSION_ENCRYPTION_VCF {
     fi
 
     # zip files
-    if [[ "${params.encryption.enabled}" = true ]]
+    if [[ "${encryption.enabled}" = true ]]
     then
-        7z a -tzip ${aes} -mmt${threads} -p"${encryption_password}" ${zip_name} ${prefix}*
+        7z a -tzip ${aes} -mmt${threads} -p"${password}" ${zip_name} ${prefix}*
         rm *vcf.gz* *info.gz
     fi
 
     # create md5 of zip file
-    if [[ "${params.encryption.enabled}" = true && "${params.imputation.md5}" = true ]]
+    if [[ "${encryption.enabled}" = true && "${params.imputation.md5}" = true ]]
     then
         md5sum ${zip_name} > ${zip_name}.md5
     fi
 
     # create md5 of imputed file
-    if [[ "${params.encryption.enabled}" = false && "${params.imputation.md5}" = true ]]
+    if [[ "${encryption.enabled}" = false && "${params.imputation.md5}" = true ]]
     then
         md5sum ${imputed_name} > ${imputed_name}.md5
     fi
 
     """
 }
-
-def compareFilenames(a, b) {
-    a = a.toString().replaceAll('PAR1', '1').replaceAll('nonPAR', '2').replaceAll('PAR2', '3')
-    b = b.toString().replaceAll('PAR1', '1').replaceAll('nonPAR', '2').replaceAll('PAR2', '3')
-    return a <=> b
-}
-
-def processFileList(fileList) {
-    return fileList.sort { a, b -> compareFilenames(a, b) }.join(" ")
-}
-
-def getFirstFile(fileList) {
-    def sorted = fileList.sort { a, b -> compareFilenames(a, b) }
-    return sorted[0]
-}
-
