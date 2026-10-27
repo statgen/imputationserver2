@@ -1,12 +1,14 @@
+nextflow.enable.types = true
+
 process FILTER_BY_CATEGORY {
     label 'pgs'
 
     input:
-    path meta
-    val category
+    meta: Path
+    category: String
 
     output:
-    path "scores.txt", emit: scores
+    scores: Path = file("scores.txt")
 
     script:
     """
@@ -23,6 +25,5 @@ process FILTER_BY_CATEGORY {
     echo "Trait Category: ${category}"
     echo "Number of Scores: \${line_count}"
     echo "::endgroup::"
-
     """
 }

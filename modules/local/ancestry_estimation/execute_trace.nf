@@ -1,4 +1,4 @@
-nextflow.enable.types =  true
+nextflow.enable.types = true
 
 process EXECUTE_TRACE {
     label 'ancestry'
@@ -11,6 +11,8 @@ process EXECUTE_TRACE {
     reference_geno: Path
     reference_pc_coord: Path
     reference_samples: Path
+    dim: Integer
+    dim_high: Integer
 
     output:
     pcs: Path = file("${batch_name}.ProPC.coord")
@@ -32,8 +34,8 @@ process EXECUTE_TRACE {
     echo "GENO_FILE ${reference_geno}" > trace.config
     echo "STUDY_FILE ${batch_name}.geno" >> trace.config
     echo "COORD_FILE ${reference_pc_coord}" >> trace.config
-    echo "DIM ${params.ancestry.dim}" >> trace.config
-    echo "DIM_HIGH ${params.ancestry.dim_high}" >> trace.config
+    echo "DIM ${dim}" >> trace.config
+    echo "DIM_HIGH ${dim_high}" >> trace.config
     echo "OUT_PREFIX ${batch_name}" >> trace.config
     echo "NUM_THREADS 1" >> trace.config
 

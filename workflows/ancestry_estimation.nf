@@ -1,4 +1,4 @@
-nextflow.enable.types =  true
+nextflow.enable.types = true
 
 include { AncestryParams } from '../types/params'
 
@@ -14,13 +14,20 @@ workflow ANCESTRY_ESTIMATION {
     build: String
 
     main:
-    references = files(ancestry.references, glob: true)
+    if (ancestry.references == null) {
+        error('ancestry.references is required when ancestry estimation is enabled.')
+    }
+    references = files(ancestry.references, glob: true, checkIfExists: true)
 
     ref_site    = references.find { ref -> ref.getExtension() == 'site'    }
     ref_range   = references.find { ref -> ref.getExtension() == 'range'   }
     ref_geno    = references.find { ref -> ref.getExtension() == 'geno'    }
     ref_coord   = references.find { ref -> ref.getExtension() == 'coord'   }
     ref_samples = references.find { ref -> ref.getExtension() == 'samples' }
+
+    if (ref_site == null || ref_range == null || ref_geno == null || ref_coord == null || ref_samples == null) {
+        error('Ancestry references must include .site, .range, .geno, .coord and .samples files')
+    }
 
     trace = PREPARE_TRACE(vcf_files.collect(), ref_site, ancestry.batch_size, build)
 
@@ -35,22 +42,24 @@ workflow ANCESTRY_ESTIMATION {
         ref_geno,
         ref_coord,
         ref_samples,
+        ancestry.dim,
+        ancestry.dim_high,
     )
 
     populations = ESTIMATE_ANCESTRY(
-        pcs,
+        pcs.collect(),
         ref_coord,
         ref_samples,
-        ancestry
+        ancestry,
     )
 
     VISUALIZE_ANCESTRY(
-        file("${baseDir}/files/ancestry-estimation.Rmd"),
+        file("${baseDir}/files/ancestry-estimation.Rmd", checkIfExists: true),
         populations,
         ref_coord,
         ref_samples,
     )
 
     emit:
-    estimated_ancestry = populations
+    estimated_ancestry: Value<Path> = populations
 }
