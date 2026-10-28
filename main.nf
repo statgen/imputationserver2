@@ -9,7 +9,7 @@ Author: TOPMed Imputation Server Team
 ---------------------------
  */
 
-// nextflow.enable.types = true
+nextflow.enable.types = true
 
 include {
     RefPanelParams ;
@@ -23,7 +23,7 @@ include {
     PgsCatalogParams
 } from './types/params'
 
-include { VcfMetafile } from './types/workflow'
+include { VcfMetafile ; ImputedChunk } from './types/workflow'
 
 params {
     project: String
@@ -68,51 +68,67 @@ include { ENCRYPTION } from './workflows/encryption'
 include { ANCESTRY_ESTIMATION } from './workflows/ancestry_estimation'
 include { PGS_CALCULATION } from './workflows/pgs_calculation'
 
+def error_exit(message: String) {
+    println("::error:: ${message}")
+    error(message)
+}
+
+def success_exit(message: String) {
+    println("::message:: ${message}")
+    exit(0, message)
+}
+
 workflow {
 
     main:
-    refpanel = params.refpanel_yaml ? (record(RefPanelUtil.loadFromFile(params.refpanel_yaml)) as RefPanelParams) : params.refpanel
+    def refpanel: RefPanelParams? = params.refpanel
+    if (params.refpanel_yaml) {
+        refpanel = (RefPanelUtil.loadFromFile(params.refpanel_yaml) as Object) as RefPanelParams
+    }
     if (refpanel == null) {
-        exit(1, 'Either refpanel or refpanel_yaml must be provided.')
+        error_exit('Either refpanel or refpanel_yaml must be provided.')
     }
 
     //TODO create json validation file
     def phasing_engine = params.phasing.engine
-
     if (phasing_engine != 'eagle' && phasing_engine != 'no_phasing') {
-        println("::error:: For phasing, only options 'eagle' or 'no_phasing' are allowed.")
-        exit(1)
+        error_exit("For phasing, only options 'eagle' or 'no_phasing' are allowed.")
     }
 
-    encryption_password = params.password ?: PasswordCreator.createPassword()
+    def encryption_password = params.password ?: PasswordCreator.createPassword()
 
-    population = params.allele_frequency_population ?: 'off'
+    def population = params.allele_frequency_population ?: 'off'
 
-    files = channel.fromPath(params.files)
+    def files = channel.fromPath(params.files)
     files.ifEmpty {
-        println('::error:: No vcf.gz input files detected.')
-        exit(1)
+        error_exit('No vcf.gz input files detected.')
     }
 
     // Find site files from full pattern and make site file pattern relative
-    sites_pattern = "${refpanel.sites}"
-    sites = "./${file(refpanel.sites).name}"
+    def sites_pattern = "${refpanel.sites}"
+    // def sites = "./${file(refpanel.sites).name}"
 
-    site_files_ch = channel.of(1..22, 'X', 'MT')
-        .map { it ->
-            def sites_file = file(PatternUtil.parse(sites_pattern, [chr: it]))
-            def sites_file_index = file(PatternUtil.parse(sites_pattern + ".tbi", [chr: it]))
+    def chromosomes: Channel<String> = channel.fromList(1..22)
+        .map { chr -> "${chr}" }
+        .mix(channel.of('X', 'MT'))
 
-            if (!sites_file.exists()) {
-                return null
-            }
-
-            if (sites_file.exists() && !sites_file_index.exists()) {
-                error("Missing tabix index for " + sites_file)
-            }
-
-            return tuple(sites_file, sites_file_index)
+    def site_files: Channel<Path> = chromosomes.flatMap { chr ->
+        def sites_file = file(PatternUtil.parse(sites_pattern, [chr: chr]))
+        if (!sites_file.exists()) {
+            return [] as List<Path>
         }
+
+        def sites_file_index = file(PatternUtil.parse(sites_pattern + ".tbi", [chr: chr]))
+        if (!sites_file_index.exists()) {
+            error_exit("Missing tabix index for ${sites_file}")
+        }
+
+        return [sites_file, sites_file_index]
+    }
+
+    if (params.pgs.enabled && (!params.imputation.enabled || params.mode != 'imputation')) {
+        error_exit('PGS calculation requires imputation.enabled = true and mode = imputation')
+    }
 
     println("Welcome to ${params.service.name} (${workflow.manifest.version})")
 
@@ -130,10 +146,10 @@ workflow {
             params.max_samples,
         )
 
-        qc = QUALITY_CONTROL(
+        qc_metafiles = QUALITY_CONTROL(
             validation.validated_files,
             validation.validation_report,
-            site_files_ch.collect(),
+            site_files.collect(),
             refpanel,
             params.phasing,
             params.build,
@@ -142,22 +158,21 @@ workflow {
         )
 
         // check if QC chunks exist in case QC failed
-        qc.metafiles.ifEmpty {
+        qc_metafiles.ifEmpty {
             error("QC step failed")
         }
 
         if (params.mode == 'imputation') {
-            def phased_ch: Channel<VcfMetafile> = qc.metafiles
+            def phased: Channel<VcfMetafile> = qc_metafiles
 
             if (phasing_engine != 'no_phasing') {
-                phasing = PHASING(qc.metafiles, refpanel, params.phasing, params.service.threads)
-                phased_ch = phasing.phased
+                phased = PHASING(qc_metafiles, refpanel, params.phasing, params.service.threads)
             }
 
             imputation = IMPUTATION(
                 refpanel,
                 params.imputation,
-                phased_ch,
+                phased,
                 params.service.threads,
             )
 
@@ -174,9 +189,8 @@ workflow {
         }
     }
 
-    ancestry_enabled = (params.ancestry != null) && params.ancestry.enabled
-
-    def estimated_ancestry = null
+    def ancestry_enabled = (params.ancestry != null) && params.ancestry.enabled
+    def estimated_ancestry: Value<Path?> = null
     if (ancestry_enabled) {
         estimated_ancestry = ANCESTRY_ESTIMATION(files, params.ancestry, params.build)
     }
@@ -205,8 +219,7 @@ workflow {
             )
         }
 
-        println("::error:: Imputation job ${statusMessage}.")
-        exit(1)
+        error_exit("Imputation job ${statusMessage}.")
     }
 
     //submit counters for successful imputation jobs
@@ -236,24 +249,24 @@ workflow {
                 subject: "[${params.service.name}] Job ${params.project} is complete",
                 body: "Dear ${params.user.name},\n\nYour imputation job has finished succesfully. The password for the imputation results is: ${encryption_password}\n\nYou can download the results from the following link: ${params.service.url}/index.html#!jobs/${params.project_id}",
             )
-            println("::message:: Data have been exported successfully. We have sent a notification email to <b>${params.user.email}</b>")
+            success_exit("Data have been exported successfully. We have sent a notification email to <b>${params.user.email}</b>")
         }
         else {
-            println("::message:: Data have been exported successfully. We encrypted the results with the following password: <b>${encryption_password}</b>")
+            success_exit("Data have been exported successfully. We encrypted the results with the following password: <b>${encryption_password}</b>")
         }
-        exit()
-    }
-
-    //PGS job
-    if (params.send_mail && params.user.email != null) {
-        sendMail(
-            to: "${params.user.email}",
-            subject: "[${params.service.name}] Job ${params.project} is complete",
-            body: "Dear ${params.user.name},\n\nYour PGS job has finished successfully.\n\nYou can download the results from the following link: ${params.service.url}/index.html#!jobs/${params.project_id}",
-        )
-        println("::message:: Data have been exported successfully. We have sent a notification email to <b>${params.user.email}</b>")
     }
     else {
-        println("::message:: Data have been exported successfully.")
+        //PGS job
+        if (params.send_mail && params.user.email != null) {
+            sendMail(
+                to: "${params.user.email}",
+                subject: "[${params.service.name}] Job ${params.project} is complete",
+                body: "Dear ${params.user.name},\n\nYour PGS job has finished successfully.\n\nYou can download the results from the following link: ${params.service.url}/index.html#!jobs/${params.project_id}",
+            )
+            success_exit("Data have been exported successfully. We have sent a notification email to <b>${params.user.email}</b>")
+        }
+        else {
+            success_exit("Data have been exported successfully.")
+        }
     }
 }

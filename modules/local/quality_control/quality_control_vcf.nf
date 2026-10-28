@@ -8,7 +8,7 @@ process QUALITY_CONTROL_VCF {
     publishDir params.output, mode: 'copy', pattern: "statistics/*.txt"
 
     input:
-    vcf_files: Bag<Path>
+    vcf_files: Set<Path>
     site_files: Bag<Path> // Not used explicitly, but adding as input causes files to be staged.
     chain_file: Path?
     refpanel: RefPanelParams

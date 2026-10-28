@@ -8,9 +8,9 @@ include { QUALITY_CONTROL_REPORT } from '../modules/local/quality_control/qualit
 
 workflow QUALITY_CONTROL {
     take:
-    validated_files: Bag<Path>
-    validation_report: Path
-    site_files: Bag<Path>
+    validated_files: Value<Set<Path>>
+    validation_report: Value<Path>
+    site_files: Value<Bag<Path>>
     refpanel: RefPanelParams
     phasing: PhasingParams
     build: String
