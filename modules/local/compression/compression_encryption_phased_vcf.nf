@@ -52,10 +52,11 @@ process COMPRESSION_ENCRYPTION_PHASED_VCF {
             }
             { print }
             ' header_from_chunk.txt > final_header.txt
-
-        bcftools concat --threads ${threads} --ligate -Oz ${phased_joined} | bcftools reheader -h final_header.txt -o ${phased_name}
+        bcftools concat --threads ${threads} --ligate -Ou ${phased_joined} | bcftools annotate -x 'FMT/PS,FMT/PQ' -Oz | bcftools reheader -h final_header.txt -o ${phased_name}
+        #bcftools concat --threads ${threads} --ligate -Oz ${phased_joined} | bcftools reheader -h final_header.txt -o ${phased_name}
     else
-        bcftools concat --threads ${threads} --ligate -Oz -o intermediate_${phased_name} ${phased_joined}
+        #bcftools concat --threads ${threads} --ligate -Oz -o intermediate_${phased_name} ${phased_joined}
+        bcftools concat --threads ${threads} --ligate -Ou ${phased_joined} |bcftools annotate -x 'FMT/PS,FMT/PQ' -Oz -o ${phased_name}
         mv intermediate_${phased_name} ${phased_name}
     fi
 
