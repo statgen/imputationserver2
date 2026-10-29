@@ -32,6 +32,7 @@ workflow:
           contact: "${CLOUDGENE_CONTACT_NAME}"
           email: "${CLOUDGENE_CONTACT_EMAIL}"
           url: "${CLOUDGENE_SERVICE_URL}"
+          frontend: "${CLOUDGENE_SERVICE_FRONTEND}"
       groups:
         - id: validation
           label: "Input Validation"

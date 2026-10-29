@@ -166,13 +166,17 @@ workflow.onComplete {
         println "::set-value-and-submit name=genome_build::${params.build}"
     }
 
+    def downloads_url = (params.service.frontend == 'vue')
+        ? "${params.service.url}/jobs/${params.project_id}"
+        : "${params.service.url}/index.html#!jobs/${params.project_id}"
+
     // imputation job
     if (params.merge_results == true && params.encryption.enabled == true) {
         if (params.send_mail && params.user.email != null) {
             sendMail {
                 to "${params.user.email}"
                 subject "[${params.service.name}] Job ${params.project} is complete"
-                body "Dear ${params.user.name},\n\nYour imputation job has finished succesfully. The password for the imputation results is: ${params.encryption_password}\n\nYou can download the results from the following link: ${params.service.url}/index.html#!jobs/${params.project_id}"
+                body "Dear ${params.user.name},\n\nYour imputation job has finished succesfully. The password for the imputation results is: ${params.encryption_password}\n\nYou can download the results from the following link: ${downloads_url}"
             }
             println "::message:: Data have been exported successfully. We have sent a notification email to <b>${params.user.email}</b>"
         } else {
@@ -186,7 +190,7 @@ workflow.onComplete {
         sendMail {
             to "${params.user.email}"
             subject "[${params.service.name}] Job ${params.project} is complete"
-            body "Dear ${params.user.name},\n\nYour PGS job has finished successfully.\n\nYou can download the results from the following link: ${params.service.url}/index.html#!jobs/${params.project_id}"
+            body "Dear ${params.user.name},\n\nYour PGS job has finished successfully.\n\nYou can download the results from the following link: ${downloads_url}"
         }
         println "::message:: Data have been exported successfully. We have sent a notification email to <b>${params.user.email}</b>"
     } else {
