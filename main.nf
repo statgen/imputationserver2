@@ -126,6 +126,11 @@ workflow {
 workflow.onComplete {
     //TODO: use templates
     //TODO: move in EmailHelper class
+
+    def downloads_url = (params.service.frontend == 'vue')
+        ? "${params.service.url}/jobs/${params.project_id}"
+        : "${params.service.url}/index.html#!jobs/${params.project_id}"
+
     if (!workflow.success) {
         def statusMessage = (workflow.exitStatus != null || workflow.errorReport == "QC step failed")
             ? "failed"
@@ -139,7 +144,7 @@ workflow.onComplete {
             sendMail {
                 to "${params.user.email}"
                 subject "[${params.service.name}] Job ${params.project} ${statusMessage}"
-                body "Dear ${params.user.name},\n\n${statusText}\n\nMore details can be found at the following link: ${params.service.url}/index.html#!jobs/${params.project_id}"
+                body "Dear ${params.user.name},\n\n${statusText}\n\nMore details can be found at the following link: ${downloads_url}"
             }
         }
 
@@ -165,10 +170,6 @@ workflow.onComplete {
         println "::set-value-and-submit name=phasing_engine::${phasing_engine}"
         println "::set-value-and-submit name=genome_build::${params.build}"
     }
-
-    def downloads_url = (params.service.frontend == 'vue')
-        ? "${params.service.url}/jobs/${params.project_id}"
-        : "${params.service.url}/index.html#!jobs/${params.project_id}"
 
     // imputation job
     if (params.merge_results == true && params.encryption.enabled == true) {
