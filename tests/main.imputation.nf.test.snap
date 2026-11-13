@@ -1,4 +1,14 @@
 {
+    "Should run with phased data and no_phasing selected": {
+        "content": [
+            "::log:: Reference Panel Ranges: genome-wide\n::message:: Calculating QC Statistics\n::group type=message::\n<b>Statistics:</b>\nAlternative allele frequency > 0.5 sites: 2,296\nReference Overlap: 99.00 %\nMatch: 7,735\nAllele switch: 0\nStrand flip: 0\nStrand flip and allele switch: 0\nA/T, C/G genotypes: 0\n<b>Filtered sites:</b>\nFilter flag set: 0\nInvalid alleles: 0\nMultiallelic sites: 0\nDuplicated sites: 0\nNonSNP sites: 0\nMonomorphic sites: 11\nAllele mismatch: 0\nSNPs call rate < 90%: 0\n::endgroup::\n::set-counter name=remaining-chunks:: 4\n::group type=warning::\nExcluded sites in total: 11\nRemaining sites in total: 7,735\nSee snps-excluded.txt for details\nTyped only sites: 78\nSee typed-only.txt for details\n\n::endgroup::\n"
+        ],
+        "timestamp": "2026-10-28T15:41:50.980204",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.4"
+        }
+    },
     "Should run with eagle from hg38 to hg19": {
         "content": [
             "::warning:: Uploaded data is hg38 and reference is hg19.\n::message:: Lift Over\n::set-counter name=liftover:: 1\n::log:: Reference Panel Ranges: genome-wide\n::message:: Calculating QC Statistics\n::group type=message::\n<b>Statistics:</b>\nAlternative allele frequency > 0.5 sites: 2,296\nReference Overlap: 99.00 %\nMatch: 7,735\nAllele switch: 0\nStrand flip: 0\nStrand flip and allele switch: 0\nA/T, C/G genotypes: 0\n<b>Filtered sites:</b>\nFilter flag set: 0\nInvalid alleles: 0\nMultiallelic sites: 0\nDuplicated sites: 0\nNonSNP sites: 0\nMonomorphic sites: 11\nAllele mismatch: 0\nSNPs call rate < 90%: 0\n::endgroup::\n::set-counter name=remaining-chunks:: 4\n::group type=warning::\nExcluded sites in total: 11\nRemaining sites in total: 7,735\nSee snps-excluded.txt for details\nTyped only sites: 78\nSee typed-only.txt for details\n\n::endgroup::\n"
@@ -29,6 +39,16 @@
             "nextflow": "25.10.4"
         }
     },
+    "Should run with phased data and r2 filter": {
+        "content": [
+            "::log:: Reference Panel Ranges: genome-wide\n::message:: Calculating QC Statistics\n::group type=message::\n<b>Statistics:</b>\nAlternative allele frequency > 0.5 sites: 2,296\nReference Overlap: 99.00 %\nMatch: 7,735\nAllele switch: 0\nStrand flip: 0\nStrand flip and allele switch: 0\nA/T, C/G genotypes: 0\n<b>Filtered sites:</b>\nFilter flag set: 0\nInvalid alleles: 0\nMultiallelic sites: 0\nDuplicated sites: 0\nNonSNP sites: 0\nMonomorphic sites: 11\nAllele mismatch: 0\nSNPs call rate < 90%: 0\n::endgroup::\n::set-counter name=remaining-chunks:: 4\n::group type=warning::\nExcluded sites in total: 11\nRemaining sites in total: 7,735\nSee snps-excluded.txt for details\nTyped only sites: 78\nSee typed-only.txt for details\n\n::endgroup::\n"
+        ],
+        "timestamp": "2026-10-28T15:47:20.443849",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.4"
+        }
+    },
     "Should run with phased data and no phasing selected": {
         "content": [
             "::log:: Reference Panel Ranges: genome-wide\n::message:: Calculating QC Statistics\n::group type=message::\n<b>Statistics:</b>\nAlternative allele frequency > 0.5 sites: 2,296\nReference Overlap: 99.00 %\nMatch: 7,735\nAllele switch: 0\nStrand flip: 0\nStrand flip and allele switch: 0\nA/T, C/G genotypes: 0\n<b>Filtered sites:</b>\nFilter flag set: 0\nInvalid alleles: 0\nMultiallelic sites: 0\nDuplicated sites: 0\nNonSNP sites: 0\nMonomorphic sites: 11\nAllele mismatch: 0\nSNPs call rate < 90%: 0\n::endgroup::\n::set-counter name=remaining-chunks:: 4\n::group type=warning::\nExcluded sites in total: 11\nRemaining sites in total: 7,735\nSee snps-excluded.txt for details\nTyped only sites: 78\nSee typed-only.txt for details\n\n::endgroup::\n"
@@ -51,12 +71,12 @@
     },
     "Should run with beagle": {
         "content": [
-            "::log:: Reference Panel Ranges: genome-wide\n::message:: Calculating QC Statistics\n::group type=message::\n<b>Statistics:</b>\nAlternative allele frequency > 0.5 sites: 2,296\nReference Overlap: 99.00 %\nMatch: 7,735\nAllele switch: 0\nStrand flip: 0\nStrand flip and allele switch: 0\nA/T, C/G genotypes: 0\n<b>Filtered sites:</b>\nFilter flag set: 0\nInvalid alleles: 0\nMultiallelic sites: 0\nDuplicated sites: 0\nNonSNP sites: 0\nMonomorphic sites: 11\nAllele mismatch: 0\nSNPs call rate < 90%: 0\n::endgroup::\n::group type=warning::\nExcluded sites in total: 11\nRemaining sites in total: 7,735\nSee snps-excluded.txt for details\nTyped only sites: 78\nSee typed-only.txt for details\n\n::endgroup::\n"
+            "::log:: Reference Panel Ranges: genome-wide\n::message:: Calculating QC Statistics\n::group type=message::\n<b>Statistics:</b>\nAlternative allele frequency > 0.5 sites: 2,296\nReference Overlap: 99.00 %\nMatch: 7,735\nAllele switch: 0\nStrand flip: 0\nStrand flip and allele switch: 0\nA/T, C/G genotypes: 0\n<b>Filtered sites:</b>\nFilter flag set: 0\nInvalid alleles: 0\nMultiallelic sites: 0\nDuplicated sites: 0\nNonSNP sites: 0\nMonomorphic sites: 11\nAllele mismatch: 0\nSNPs call rate < 90%: 0\n::endgroup::\n::set-counter name=remaining-chunks:: 4\n::group type=warning::\nExcluded sites in total: 11\nRemaining sites in total: 7,735\nSee snps-excluded.txt for details\nTyped only sites: 78\nSee typed-only.txt for details\n\n::endgroup::\n"
         ],
-        "timestamp": "2024-07-17T17:51:10.578783",
+        "timestamp": "2026-10-28T16:05:17.797793",
         "meta": {
-            "nf-test": "0.8.4",
-            "nextflow": "24.04.2"
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.4"
         }
     },
     "Should run with phased data": {
@@ -127,6 +147,16 @@
         "meta": {
             "nf-test": "0.9.4",
             "nextflow": "25.10.4"
+        }
+    },
+    "Should run with Eagle and r2 filter": {
+        "content": [
+            "::log:: Reference Panel Ranges: genome-wide\n::message:: Calculating QC Statistics\n::group type=message::\n<b>Statistics:</b>\nAlternative allele frequency > 0.5 sites: 2,296\nReference Overlap: 99.00 %\nMatch: 7,735\nAllele switch: 0\nStrand flip: 0\nStrand flip and allele switch: 0\nA/T, C/G genotypes: 0\n<b>Filtered sites:</b>\nFilter flag set: 0\nInvalid alleles: 0\nMultiallelic sites: 0\nDuplicated sites: 0\nNonSNP sites: 0\nMonomorphic sites: 11\nAllele mismatch: 0\nSNPs call rate < 90%: 0\n::endgroup::\n::set-counter name=remaining-chunks:: 4\n::group type=warning::\nExcluded sites in total: 11\nRemaining sites in total: 7,735\nSee snps-excluded.txt for details\nTyped only sites: 78\nSee typed-only.txt for details\n\n::endgroup::\n"
+        ],
+        "timestamp": "2026-10-28T15:47:59.732701",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.4"
         }
     }
 }

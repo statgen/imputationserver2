@@ -1,12 +1,12 @@
 nextflow_pipeline {
 
-	def ONLY_IN_INPUT = 78
+    def PASSWORD = "LHX:VO{_72o"
+    def ONLY_IN_INPUT = 78
 
     name "Pipeline Tests for Quality Control"
     script "main.nf"
 
     test("Should run QC-only") {
-
         when {
             params {
                 project  = "test-job"
@@ -32,13 +32,10 @@ nextflow_pipeline {
                 file("${outputDir}/statistics/snps-typed-only.txt").text,
                 file("${outputDir}/statistics/snps-excluded.txt").text
             ).match()
-
         }
-
     }
 
     test("Should run QC-only including VCF 4.3 and indels") {
-
         when {
             params {
                 project  = "test-job"
@@ -54,7 +51,6 @@ nextflow_pipeline {
         then {
             assert workflow.success
         }
-
     }
 
     test("Should fail QC-only but publish files") {

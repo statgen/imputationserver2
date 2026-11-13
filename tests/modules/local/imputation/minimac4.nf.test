@@ -5,7 +5,6 @@ nextflow_process {
     process "MINIMAC4"
 
     test("Should run without failures") {
-
         when {
             params {
                 refpanel = [
@@ -28,9 +27,9 @@ nextflow_process {
                 input[4] = params.imputation.minimac_min_ratio as Float
                 input[5] = params.imputation.min_r2 as Float
                 input[6] = params.imputation.decay as Float
-                input[7] = params.imputation.prob_threshold as Float
-                input[8] = params.imputation.prob_threshold_s1 as Float
-                input[9] = params.imputation.diff_threshold as Float
+                input[7] = params.imputation.diff_threshold as Float
+                input[8] = params.imputation.prob_threshold as Float
+                input[9] = params.imputation.prob_threshold_s1 as Float
                 input[10] = params.imputation.min_recom as Float
                 input[11] = params.service.threads
                 """
@@ -39,16 +38,14 @@ nextflow_process {
 
         then {
             assert process.success
+
             def file = path(process.out.imputed_chunks.get(0).dose).vcf
             assert file.getNoSnps() == 31
             assert file.getChromosome() == "20"
-
         }
-
     }
 
     test("Should output the same number of SNPS with different minimac4 window") {
-
         when {
             params {
                 refpanel = [
@@ -74,9 +71,9 @@ nextflow_process {
                 input[4] = params.imputation.minimac_min_ratio as Float
                 input[5] = params.imputation.min_r2 as Float
                 input[6] = params.imputation.decay as Float
-                input[7] = params.imputation.prob_threshold as Float
-                input[8] = params.imputation.prob_threshold_s1 as Float
-                input[9] = params.imputation.diff_threshold as Float
+                input[7] = params.imputation.diff_threshold as Float
+                input[8] = params.imputation.prob_threshold as Float
+                input[9] = params.imputation.prob_threshold_s1 as Float
                 input[10] = params.imputation.min_recom as Float
                 input[11] = params.service.threads
                 """
@@ -85,12 +82,10 @@ nextflow_process {
 
         then {
             assert process.success
+
             def file = path(process.out.imputed_chunks.get(0).dose).vcf
             assert file.getNoSnps() == 31
             assert file.getChromosome() == "20"
-
         }
-
     }
-
 }

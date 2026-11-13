@@ -1,10 +1,8 @@
 nextflow_pipeline {
-
     name "Pipeline Tests for Input Validation"
     script "main.nf"
 
     test("Should pass with several files") {
-
         when {
             params {
                 project  = "test-job"
@@ -20,11 +18,9 @@ nextflow_pipeline {
         then {
             assert workflow.success
         }
-
     }
 
     test("Should fail due to wrong path") {
-
         when {
             params {
                 project  = "test-job"
@@ -40,11 +36,9 @@ nextflow_pipeline {
         then {
             assert workflow.failed
         }
-
     }
 
     test("Should fail due to unsorted file") {
-
         when {
             params {
                 project  = "test-job"
@@ -59,9 +53,6 @@ nextflow_pipeline {
 
         then {
             assert workflow.failed
-
         }
-
     }
-
 }
