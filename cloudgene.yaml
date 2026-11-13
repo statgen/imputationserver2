@@ -120,6 +120,7 @@ workflow:
         bind: refpanel
         property: populations
         category: RefPanel
+      serialize: false
 
     - id: mode
       description: Mode

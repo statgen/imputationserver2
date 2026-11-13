@@ -211,7 +211,7 @@ workflow {
             ? "Your job failed."
             : "Your job has been canceled."
 
-        if (params.send_mail && params.user.email != null) {
+        if (params.send_mail && params.user.email) {
             sendMail(
                 to: "${params.user.email}",
                 subject: "[${params.service.name}] Job ${params.project} ${statusMessage}",
@@ -243,7 +243,7 @@ workflow {
 
     // imputation job
     if (params.merge_results == true && params.encryption.enabled == true) {
-        if (params.send_mail && params.user.email != null) {
+        if (params.send_mail && params.user.email) {
             sendMail(
                 to: "${params.user.email}",
                 subject: "[${params.service.name}] Job ${params.project} is complete",
@@ -257,7 +257,7 @@ workflow {
     }
     else {
         //PGS job
-        if (params.send_mail && params.user.email != null) {
+        if (params.send_mail && params.user.email) {
             sendMail(
                 to: "${params.user.email}",
                 subject: "[${params.service.name}] Job ${params.project} is complete",
