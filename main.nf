@@ -91,8 +91,8 @@ workflow {
 
     //TODO create json validation file
     def phasing_engine = params.phasing.engine
-    if (phasing_engine != 'eagle' && phasing_engine != 'no_phasing') {
-        error_exit("For phasing, only options 'eagle' or 'no_phasing' are allowed.")
+    if (phasing_engine != 'eagle' && phasing_engine != 'beagle' && phasing_engine != 'no_phasing') {
+        error_exit("For phasing, only options 'eagle', 'beagle', or 'no_phasing' are allowed.")
     }
 
     def encryption_password = params.password ?: PasswordCreator.createPassword()
