@@ -32,7 +32,7 @@ process MINIMAC4 {
     used_threads = params.service.threads != -1 ? params.service.threads : task.cpus
 
     """
-    tabix ${chunkfile}
+    bcftools index  "${chunkfile}"
 
     minimac4 \
         --region ${chr_mapped}:${start}-${end} \
